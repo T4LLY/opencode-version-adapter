@@ -20,6 +20,9 @@ rules:
   design:
     - Keep OpenCode generation-specific behavior behind isolated adapter boundaries.
     - Prefer proven upstream compatibility code when semantics match, while excluding upstream consumer-specific behavior.
+    - Keep generation adapter entry modules focused on composition; place detailed mapping in capability-specific modules created only when required.
+    - Do not allow generation adapters to import each other or shared contracts to import generation-specific OpenCode types.
+    - Prefer interfaces and small factories; introduce stateful classes only for explicit lifecycle or resource ownership.
     - Re-evaluate module boundaries before allowing a source file to grow beyond approximately 600 LOC.
   tasks:
     - Verify behavior against actual OpenCode APIs or runtimes where practical; compilation alone is insufficient.
