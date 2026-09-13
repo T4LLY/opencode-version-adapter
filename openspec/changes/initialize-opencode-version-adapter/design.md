@@ -76,6 +76,46 @@ Rejected because partially active plugins can appear healthy while silently losi
 
 If a future harness adapter is created, it will compose this package for OpenCode support rather than expanding this package into a universal abstraction.
 
+### Decision: Normalize lifecycle ownership without hiding native differences
+
+Each generation adapter will expose one setup-to-dispose ownership boundary for resources it installs. Capability modules may return individual cleanup actions, but the generation adapter owns teardown ordering. Failed partial setup must roll back resources acquired by that setup attempt, and disposal must be safe to request more than once.
+
+Alternative considered: expose each generation's native lifecycle directly to consumers.
+
+Rejected because it would make lifecycle handling a consumer responsibility and would reintroduce version-specific branching outside the adapter boundary.
+
+### Decision: Stabilize error categories at the adapter boundary
+
+Consumers will distinguish unsupported capability, initialization failure, and invalid host context without depending on native OpenCode exception classes. Generation-specific failures may remain attached as diagnostic causes.
+
+Alternative considered: forward raw OpenCode errors unchanged.
+
+Rejected because consumers would then depend on version-specific error types and messages that this package is intended to isolate.
+
+### Decision: Keep internal modules non-public by default
+
+The package root is the normal consumer boundary. Internal helpers, generation adapters, and capability implementations are not public API merely because they exist as source modules. Version-specific exports are added only when a real testing, debugging, or consumer requirement justifies them.
+
+Alternative considered: expose adapter internals early for flexibility.
+
+Rejected because consumers would acquire dependencies on implementation structure and make later responsibility splitting or adapter replacement unnecessarily breaking.
+
+### Decision: Track upstream-derived bridge code explicitly
+
+When generic compatibility logic is adapted from upstream code, the implementation will retain required notices and record source provenance sufficient to identify the upstream project and revision. Upstream updates are reviewed and adopted deliberately rather than synchronized automatically.
+
+Alternative considered: periodically replace local bridge code with the latest upstream implementation.
+
+Rejected because upstream application-specific assumptions or semantic changes could silently alter this package's compatibility contract.
+
+### Decision: Extend capabilities through a specification-first workflow
+
+A concrete consumer requirement starts capability expansion. The relevant OpenCode APIs are inspected, observable semantics are written into OpenSpec, tests are defined, and only then is production mapping added.
+
+Alternative considered: implement a discovered API first and document it afterward.
+
+Rejected because implementation-first growth encourages accidental API mirroring and makes the code, rather than the intended consumer behavior, become the specification.
+
 ## Target File Structure
 
 The implementation is organized by OpenCode generation first, then by capability inside each generation. This keeps version-specific APIs physically isolated while preventing a single generation adapter from becoming a catch-all module.

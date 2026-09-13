@@ -17,6 +17,8 @@ rules:
     - Describe externally observable behavior and compatibility guarantees, not internal class or file structure.
     - Add requirements only for capabilities required by actual consumers.
     - Treat similar API names as insufficient evidence of equivalent semantics.
+    - Specify lifecycle, failure, and public compatibility behavior before production implementation.
+    - Require a concrete consumer need before adding a new shared capability.
   design:
     - Keep OpenCode generation-specific behavior behind isolated adapter boundaries.
     - Prefer proven upstream compatibility code when semantics match, while excluding upstream consumer-specific behavior.
@@ -24,5 +26,9 @@ rules:
     - Do not allow generation adapters to import each other or shared contracts to import generation-specific OpenCode types.
     - Prefer interfaces and small factories; introduce stateful classes only for explicit lifecycle or resource ownership.
     - Re-evaluate module boundaries before allowing a source file to grow beyond approximately 600 LOC.
+    - Keep internal modules private by default; add version-specific public exports only for demonstrated needs.
+    - Record provenance and required license notices for adapted upstream compatibility code; do not auto-sync upstream changes.
+    - Centralize ownership of setup rollback and teardown without moving capability-specific behavior into the generation adapter.
   tasks:
     - Verify behavior against actual OpenCode APIs or runtimes where practical; compilation alone is insufficient.
+    - Update OpenSpec before implementing a newly required shared capability.
