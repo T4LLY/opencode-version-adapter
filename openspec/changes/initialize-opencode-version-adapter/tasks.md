@@ -2,9 +2,11 @@
 
 ## 1. Establish the initial capability inventory
 
-- [ ] 1.1 Trace FOA's current OpenCode integration and record every actually used host capability; verify the inventory against the current FOA source rather than inferred API names.
-- [ ] 1.2 Trace the corresponding behavior in the supported OpenCode v1 and v2 sources; verify each mapping includes execution timing, lifecycle, payload, cleanup, and error semantics.
-- [ ] 1.3 Update `specs/version-adaptation/spec.md` with only the concrete capabilities proven necessary by 1.1 and 1.2; verify `openspec validate initialize-opencode-version-adapter --type change --strict` succeeds.
+- [x] 1.1 Trace the four reference consumers (FOA, demand-runtime, opencode-agents-feed, and opencode-skill-usage) and record their actually used OpenCode surfaces from the supplied source snapshots.
+- [x] 1.2 Trace the corresponding server behavior in OpenCode `v1.18.30` and `v2.0.3`, including execution timing, payload meaning, lifecycle, cleanup ownership, and unsupported surfaces.
+- [x] 1.3 Inspect `oh-my-opencode-slim` `v2.2.19` (`27d3658`) and classify reusable generic bridge mechanisms separately from application-specific behavior; record license/provenance requirements.
+- [x] 1.4 Update `design.md` and `specs/version-adaptation/spec.md` with only the evidence-backed initial capability matrix, keeping unresolved TUI v2 semantics explicitly unclaimed.
+- [ ] 1.5 Run `openspec validate initialize-opencode-version-adapter --type change --strict` and resolve any validation error before Phase 1.
 
 ## 2. Define the minimum shared contract
 
@@ -32,7 +34,7 @@
 
 - [ ] 5.1 Run a minimal load smoke test against each supported OpenCode generation; verify the package is selected without consumer-side version branching.
 - [ ] 5.2 Run capability conformance tests against actual OpenCode runtimes where practical; verify runtime behavior rather than compilation alone.
-- [ ] 5.3 Integrate FOA as the first consumer without duplicating its business logic; verify the same FOA core exercises the supported capability contract on both generations.
+- [ ] 5.3 Validate the server reference consumers without duplicating their business logic; verify unsupported requirements fail explicitly rather than being hidden by partial compatibility.
 
 ## 6. Establish the capability extension workflow
 

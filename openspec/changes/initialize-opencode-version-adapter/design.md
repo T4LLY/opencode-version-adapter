@@ -4,12 +4,89 @@
 
 See `proposal.md` for motivation and `specs/version-adaptation/spec.md` for the behavior contract.
 
-The package is intended to remain a narrow OpenCode compatibility layer. OpenCode generation APIs may differ in loader shape, hooks, context objects, lifecycle behavior, events, and registration mechanisms. The initial consumer is FOA, but FOA-specific hierarchy, permission policy, inference policy, prompts, and orchestration remain outside this package.
+The package is intended to remain a narrow OpenCode compatibility layer. OpenCode generation APIs may differ in loader shape, hooks, context objects, lifecycle behavior, events, and registration mechanisms. The initial capability inventory is derived from FOA, demand-runtime, opencode-agents-feed, and opencode-skill-usage. Consumer-specific hierarchy, workspace behavior, event interpretation, telemetry, prompts, and orchestration remain outside this package.
 
 Existing projects provide useful implementation evidence:
 
 - `oh-my-opencode-slim` contains a working OpenCode v2 compatibility bridge whose generic pieces may be reused under its license after consumer-specific behavior is removed.
 - `opencode-plugin-compat` may be reused where its contracts exactly match required behavior, but this package does not assume OCP can replace every generation adapter.
+
+
+## Phase 0 Evidence Baseline
+
+Phase 0 fixes the evidence set used to define the first capability boundary. These references are investigation inputs, not runtime dependencies of this package.
+
+### Reference consumer snapshots
+
+| Consumer | Snapshot | OpenCode-facing evidence |
+| --- | --- | --- |
+| Folder-Oriented Agents | Git `e4ba2b7ecceaf535b5ee30e5cb3e160385eefa7c` | `src/opencode/plugin.ts`, `compile-config.ts`, `resource-hooks.ts`, and `src/resource/inference-limiter.ts` |
+| demand-runtime | Git `514fbff1db57504172c0f04d00b8ddce5cf5abe9` | `src/opencode/plugin.ts`, `workspace-adapter.ts`, and `schema.ts` |
+| opencode-agents-feed | archive `feed.zip` SHA-256 `7303ad66cf2203bc8deb8f07526d1845966da19ec38e0de80ab2ea92dc56b00d`, package `0.2.0` | `src/server-core.js` and `src/adapters/opencode-v1.js` |
+| opencode-skill-usage | Git `e70a6518838bd7e300d3c19f77d05ef74c3d52a2`, package `0.8.0` | `src/server-core.js` and `src/tui.js` |
+
+The other supplied archive identities are retained for reproducibility: FOA SHA-256 `027d4bdad7d73544ac922a9bb7868a6c32b3153b92c6150574cccb1f3fda88e0`, demand-runtime SHA-256 `540095ccc2f2c3ae2930b934f8396ea017b4115af122f237b4a371de08709bcd`, and opencode-skill-usage SHA-256 `3d093d176826f9844166d8a74ec00d3121ba43e2f86d25d2e55aab9935cb87a7`.
+
+### OpenCode and upstream baselines
+
+The initial semantic comparison is pinned to these immutable release references:
+
+- OpenCode v1: tag `v1.18.30`. The v1 loader, plugin hook implementation, LLM request preparation, tool execution, permission evaluation, and task-depth enforcement were inspected at this tag.
+- OpenCode v2: tag `v2.0.3`. This is the v2 baseline for the initial contract; later v2 builds are not implicitly covered. The Promise plugin context, server loader, session/model hooks, tool hooks, agent transforms, permission evaluation, config schema, and public TUI contract were inspected at this tag.
+- `oh-my-opencode-slim`: tag `v2.2.19`, release commit `27d3658`, MIT license. Candidate bridge sources inspected include `src/v2/setup.ts`, `src/v2/client-shim.ts`, `src/v2/event-adapter.ts`, and `src/index.ts`.
+
+Compatibility claims are tied to verified semantics, not only a major version label. A later OpenCode release must be revalidated before its behavior is treated as equivalent.
+
+### Proven initial capability matrix
+
+The capability names below describe semantic responsibilities discovered in Phase 0. Public exported names remain an implementation decision.
+
+| Semantic requirement | Reference consumer(s) | OpenCode v1.18.30 | OpenCode v2.0.3 | Initial decision |
+| --- | --- | --- | --- | --- |
+| server plugin setup and disposal | FOA, feed, skill-usage | native: v1 server module plus `dispose` hook | native: v2 `setup` returns cleanup | shared lifecycle capability |
+| host event delivery | FOA, feed, skill-usage | native: `event` hook receives host events | native: event subscription domain | shared delivery capability; consumer event ontology stays outside |
+| blocking model-request gate | FOA | native: awaited `chat.params` during LLM request preparation | native: awaited `session.model.request` before transport request construction completes | separate shared capability |
+| session agent/model observation | feed, skill-usage | native: `chat.params` carries session, agent, model | native: v2 session request/context hooks expose session, agent, and model | separate shared capability; do not merge with blocking gate |
+| before-tool execution notification | FOA | native: awaited immediately before tool execution | native: awaited `tool.execute.before` | shared capability |
+| successful tool-completion notification | skill-usage | native: `tool.execute.after` runs after successful execution | native: `tool.execute.after` has explicit `completed` and `error` branches; adapter can select completed events without synthesizing timing | shared capability; active agent is not part of the minimum promise |
+| dynamic agent registration | FOA | native: config hook mutates `config.agent` | native: agent transform `update(id, ...)` creates a missing agent ID before applying the update | shared capability |
+| ordered agent permission rules | FOA | native: ordered rules use last matching rule | native: ordered rules also use last matching rule | shared capability; representation conversion is generation-specific |
+| global subagent-depth control | FOA | native: `config.subagent_depth`, enforced by task execution | unsupported: v2.0.3 canonical config and agent schemas contain no depth control exposed to plugins | shared capability with explicit v2 unsupported state |
+| client application logging | FOA diagnostics | native: `client.app.log` | unsupported by the v2.0.3 Promise plugin context; `app` exposes metadata only | do not promote to an initial required shared capability because FOA treats it as best-effort diagnostics |
+| workspace adapter registration | demand-runtime | native: `experimental_workspace.register` | unsupported: v2.0.3 Promise plugin context exposes no workspace registration domain | separate capability, implemented only in the later workspace phase |
+| external TUI runtime and UI/keymap/state/client surface | skill-usage | native for the v1 consumer runtime | not yet claimed: v2.0.3 exposes a materially different public TUI contract, but the external loading path and complete skill-usage semantic mapping are deferred to the TUI phase | separate TUI runtime boundary; no server-adapter claim |
+
+No row marked unsupported may be converted into a warning-and-continue path when a consumer requires that behavior. Rows not yet claimed are not public support promises.
+
+### Semantic findings that shape the contract
+
+- `chat.params` is not one shared semantic capability. FOA uses it as an awaited inference gate, while feed and skill-usage use it to observe session/agent/model identity. Those responsibilities are split even if one native v1 hook implements both.
+- The event capability normalizes delivery ownership only. It does not convert OpenCode events into feed's `AgentEvent`; that mapping remains in opencode-agents-feed.
+- The minimum tool-completion capability does not promise an active agent. V1 does not provide one in `tool.execute.after`; skill-usage currently correlates session identity separately. V2 having an extra `agent` field does not justify silently strengthening the shared contract.
+- FOA retains hierarchy compilation, collision policy, child allowlist policy, inference concurrency policy, prompts, and subagent-depth intent. The adapter owns only generation-specific registration and representation.
+- demand-runtime retains all workspace creation/removal/recovery/path semantics. The adapter may own only host workspace registration and lifecycle translation.
+- TUI registration remains independent of server plugin registration. A public v2 TUI type surface is not sufficient evidence that the skill-usage TUI is compatible.
+
+### Loader findings
+
+OpenCode v1.18.30's server loader resolves the v1 module shape and invokes `server(input)`. OpenCode v2.0.3 resolves a server entrypoint and requires a default definition containing `id` plus `setup` or `effect`. The v2 host resolver also recognizes distinct `server`, `tui`, and `rpc` package entrypoints.
+
+A combined default object containing both v1 and v2 members may be a viable packaging technique because each loader examines a different required member set, but Phase 0 does not make that shape a permanent specification. The actual package export strategy must be proven against both pinned runtimes before it becomes part of the public contract. Consumer business logic must not perform generation selection regardless of the packaging mechanism chosen.
+
+### `oh-my-opencode-slim` reuse classification
+
+The upstream v2 bridge is evidence, not a module to copy wholesale. At `v2.2.19` the inspected files are already responsibility-heavy (`setup.ts` is about 1,249 lines, `client-shim.ts` about 474, `event-adapter.ts` about 410, and `index.ts` about 1,509), so reproducing that layout would violate this package's responsibility guardrails.
+
+Potentially generic mechanisms that may be adapted only when required are:
+
+- v2 setup/cleanup ownership
+- narrow v1-shaped client operations required by a proven consumer
+- agent transformation mechanics
+- tool-hook bridging
+- event subscription wiring
+- session-hook bridging needed by an approved semantic capability
+
+Application-specific command markers, interview behavior, background-job/orchestrator policy, prompt mutation, model fallback, delegation policy, MCP policy, and other oh-my-opencode-slim behavior remain excluded. Any copied or substantially adapted block must record its exact upstream source path and `27d3658` provenance and retain the MIT notice as required.
 
 ## Goals / Non-Goals
 
@@ -40,7 +117,7 @@ Rejected because loader compatibility does not prove hook timing, lifecycle, pay
 
 ### Decision: Add shared capabilities only when demanded by a real consumer
 
-FOA will establish the initial capability set. Later personal plugins may add capabilities when they actually use them.
+The four Phase 0 reference consumers establish the initial capability inventory. Later personal plugins may add capabilities when they actually use them.
 
 Alternative considered: mirror the entire OpenCode plugin API into a canonical API before implementation.
 
@@ -305,7 +382,7 @@ It contains only capabilities actually consumed by the plugin.
 
 The definition MUST NOT require consumers to provide independent v1 and v2 business implementations for equivalent behavior.
 
-The exact public shape is intentionally deferred until FOA's real integration surface has been traced.
+The exact public shape is intentionally deferred until the approved Phase 0 semantics are converted into the minimal Phase 1 contract.
 
 ## Responsibility Concentration Guardrails
 
@@ -371,4 +448,4 @@ This locality is an architectural acceptance criterion, not merely a preferred d
 
 This is a new package, so there is no production migration yet.
 
-Implementation will proceed incrementally from the OpenSpec tasks. FOA will migrate only after the shared capabilities it requires are implemented and verified on the relevant OpenCode generations.
+Implementation will proceed incrementally from the OpenSpec tasks. Server capability work precedes workspace and TUI work. Consumer repositories migrate only after the relevant shared capabilities are implemented and verified on the pinned OpenCode runtimes.

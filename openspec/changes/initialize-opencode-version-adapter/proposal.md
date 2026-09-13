@@ -11,7 +11,7 @@ OpenCode plugin API generations expose different integration contracts, which ot
 - Require capabilities to be added incrementally from real consumer requirements instead of mirroring the full OpenCode plugin API.
 - Require unsupported mandatory capabilities to fail explicitly rather than degrade silently.
 - Establish OpenCode v1 and OpenCode v2 as the initial generations, while allowing later generations to be added without rewriting consumer business logic.
-- Use Folder-Oriented Agents (FOA) as the first consumer that determines the initial implemented capability set.
+- Derive the initial capability inventory from four real reference consumers: Folder-Oriented Agents (FOA), demand-runtime, opencode-agents-feed, and opencode-skill-usage.
 
 ## Capabilities
 
@@ -28,4 +28,5 @@ None.
 - Adds the initial OpenSpec project configuration and planning artifacts for the new package.
 - Establishes the compatibility contract that future implementation changes must follow.
 - Does not implement production code in this change.
+- Records the first evidence-backed cross-generation capability classifications without implementing production code.
 - Future capability requirements will extend the `version-adaptation` specification only when required by real consumers.

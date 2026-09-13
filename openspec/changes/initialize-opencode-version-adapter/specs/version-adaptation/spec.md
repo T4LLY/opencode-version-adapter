@@ -178,3 +178,135 @@ The specification update MUST be driven by a concrete consumer requirement and M
 
 - **WHEN** investigation finds an additional OpenCode API that no current consumer uses
 - **THEN** the shared contract is not expanded solely to mirror that API
+
+
+### Requirement: Model request gating is distinct from identity observation
+
+The adapter MUST represent a blocking model-request gate independently from passive session agent/model observation. A generation MAY implement both semantics through one native hook, but the shared contract MUST NOT require them to remain coupled.
+
+#### Scenario: Consumer blocks a model request before provider execution
+
+- **WHEN** a consumer requires admission control before an OpenCode model request proceeds
+- **THEN** the model-request gate is awaited before the provider request is allowed to continue
+- **AND** the gate receives enough stable identity to distinguish the session, agent, provider, and model required by the consumer
+
+#### Scenario: Consumer only observes session identity
+
+- **WHEN** a consumer needs session-to-agent/model association without blocking model execution
+- **THEN** it can use the observation capability without acquiring the semantics or lifecycle of the blocking gate
+
+### Requirement: Host event delivery does not define consumer event meaning
+
+The adapter MUST provide generation-independent ownership and delivery of host events required by consumers without defining a universal application event ontology.
+
+#### Scenario: Feed consumes OpenCode events
+
+- **WHEN** opencode-agents-feed receives events through the version adapter
+- **THEN** OpenCode generation-specific subscription mechanics stop at the version-adapter boundary
+- **AND** feed-specific conversion into `AgentEvent` remains owned by opencode-agents-feed
+- **AND** the version adapter does not interpret feed-specific handoff, message, or tool semantics
+
+### Requirement: Tool execution capabilities preserve observed timing
+
+The initial tool capabilities MUST distinguish notification immediately before tool execution from successful tool-completion notification. They MUST NOT promise fields that are absent from a supported generation merely because another generation provides them.
+
+#### Scenario: Before-tool callback is used as a release point
+
+- **WHEN** a consumer registers a before-tool callback
+- **THEN** the callback is awaited at the host execution point before the tool action begins
+
+#### Scenario: Consumer observes successful tool completion
+
+- **WHEN** a consumer registers the successful tool-completion capability
+- **THEN** it is invoked only after successful host tool completion
+- **AND** a generation whose native after-hook also reports errors MUST NOT surface an error branch as successful completion
+
+#### Scenario: One generation exposes active agent on tool completion
+
+- **WHEN** the active OpenCode generation includes an agent identifier in its native tool-completion payload but another supported generation does not
+- **THEN** the minimum shared tool-completion contract does not claim that active agent identity is always available
+- **AND** a consumer that requires correlation uses a separately specified identity capability
+
+### Requirement: Agent registration does not absorb consumer policy
+
+The initial agent capability MUST support registering the consumer-provided agent representation and preserving ordered permission intent without deciding consumer hierarchy or permission policy.
+
+#### Scenario: FOA registers generated agents
+
+- **WHEN** FOA supplies generated agent definitions
+- **THEN** the generation adapter maps those definitions into the active OpenCode registration mechanism
+- **AND** FOA remains responsible for hierarchy compilation, descriptions, prompts, collision decisions, child allowlists, and requested subagent depth
+
+#### Scenario: Ordered child permission rules are mapped
+
+- **WHEN** a consumer supplies ordered permission intent whose behavior depends on later matching rules overriding earlier matching rules
+- **THEN** the adapter preserves that observable ordering on every generation that claims support
+- **AND** representation changes such as a generation-specific action name do not change the allow/deny result
+
+### Requirement: Initial support classifications are evidence-backed
+
+For the Phase 0 OpenCode baselines, the adapter specification records the following support classifications for the approved semantic capabilities. These classifications MUST be revalidated before broader runtime versions are claimed.
+
+| Capability | OpenCode v1.18.30 | OpenCode v2.0.3 |
+| --- | --- | --- |
+| server lifecycle | native | native |
+| host event delivery | native | native |
+| blocking model-request gate | native | native |
+| session agent/model observation | native | native |
+| before-tool execution notification | native | native |
+| successful tool-completion notification | native | native |
+| dynamic agent registration | native | native |
+| ordered agent permission rules | native | native |
+| global subagent-depth control | native | unsupported |
+| workspace adapter registration | native | unsupported |
+
+Client application logging is not part of this initial required shared surface because the only observed use is FOA best-effort diagnostic logging and OpenCode v2.0.3 exposes no equivalent logging operation in the Promise plugin context. TUI support is not claimed by this server matrix.
+
+#### Scenario: FOA requires deeper subagent nesting on v2.0.3
+
+- **WHEN** FOA declares global subagent-depth control as required on OpenCode v2.0.3
+- **THEN** setup fails as an unsupported required capability
+- **AND** the adapter does not silently accept the requested depth or fabricate configuration support
+
+#### Scenario: demand-runtime requires workspace registration on v2.0.3
+
+- **WHEN** demand-runtime declares workspace adapter registration as required on OpenCode v2.0.3
+- **THEN** setup fails as an unsupported required capability
+- **AND** the adapter does not emulate workspace registration through filesystem or configuration side effects
+
+### Requirement: Workspace adaptation is limited to host registration
+
+The workspace capability MUST adapt only the host registration and lifecycle boundary required to expose a consumer-owned workspace adapter. It MUST NOT absorb workspace implementation behavior from demand-runtime.
+
+#### Scenario: demand-runtime registers its workspace adapter
+
+- **WHEN** a generation supports workspace adapter registration
+- **THEN** demand-runtime remains responsible for configure, create, target, remove, recovery, garbage collection, paths, write scope, and baseline behavior
+- **AND** the version adapter owns only generation-specific host registration and cleanup semantics
+
+### Requirement: TUI adaptation is a separate runtime boundary
+
+TUI plugin adaptation MUST remain separate from the normal server VersionAdapter. Server compatibility MUST NOT imply TUI compatibility.
+
+#### Scenario: A generation exposes a TUI type surface without proven consumer compatibility
+
+- **WHEN** a generation publishes TUI types or UI primitives but the external loader path or required consumer semantics have not been verified
+- **THEN** the package does not claim TUI capability support for that generation
+- **AND** TUI support remains unimplemented until its own specification and runtime evidence are complete
+
+#### Scenario: Skill-usage TUI is adapted later
+
+- **WHEN** TUI support is implemented for opencode-skill-usage
+- **THEN** local slash-command execution, temporary key bindings, dialog lifecycle, state/path access, and application skill discovery are specified independently from server hooks
+- **AND** server adapter modules do not acquire TUI responsibilities
+
+### Requirement: Loader compatibility is verified rather than assumed
+
+The adapter MUST keep generation selection outside consumer business logic, but it MUST NOT treat one observed module export shape as a permanent cross-generation loader contract without runtime verification.
+
+#### Scenario: One package targets v1 and v2 loaders
+
+- **WHEN** the package exposes entrypoints intended to load on OpenCode v1 and v2
+- **THEN** the chosen packaging/export shape is verified against both supported runtime baselines
+- **AND** consumers do not branch on OpenCode version to select that shape
+- **AND** an unrecognized loader or host context fails explicitly rather than being guessed

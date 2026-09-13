@@ -7,7 +7,7 @@ context: |
   Development policy: add only capabilities required by real consumer plugins; do not mirror the complete OpenCode API speculatively.
   Compatibility policy: compare observable semantics across OpenCode generations and preserve meaningful differences.
   Failure policy: required unsupported capabilities fail closed rather than being silently ignored.
-  Initial consumer: Folder-Oriented Agents (FOA).
+  Initial reference consumers: Folder-Oriented Agents (FOA), demand-runtime, opencode-agents-feed, and opencode-skill-usage.
 
 rules:
   proposal:
