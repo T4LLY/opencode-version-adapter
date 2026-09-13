@@ -177,6 +177,12 @@ Alternative considered: expose adapter internals early for flexibility.
 
 Rejected because consumers would acquire dependencies on implementation structure and make later responsibility splitting or adapter replacement unnecessarily breaking.
 
+#### Phase 1 public contract boundary
+
+The initial package-root surface is limited to the evidence-backed capability identifiers, capability support states, required-capability validation, and the stable adapter error family. The root exports `CAPABILITIES`, `CapabilityId`, `RequiredCapabilities`, `CAPABILITY_SUPPORT`, `CapabilitySupport`, `CapabilitySupportMap`, `assertRequiredCapabilitiesSupported`, `ADAPTER_ERROR_CATEGORY`, `AdapterErrorCategory`, `VersionAdapterError`, `UnsupportedCapabilityError`, `AdapterInitializationError`, and `InvalidHostContextError`. `contract/` remains an implementation path rather than an additional documented consumer import path. No generation adapter, capability implementation module, client shim, TUI surface, or consumer-specific type is exported in Phase 1.
+
+The repository did not establish a package manager or build/test toolchain before Phase 1. Phase 1 therefore does not add package-manager metadata or select a build system merely to host the contract. Tooling configuration remains a separate decision; the contract stays ordinary TypeScript with no runtime dependency on OpenCode or third-party packages.
+
 ### Decision: Track upstream-derived bridge code explicitly
 
 When generic compatibility logic is adapted from upstream code, the implementation will retain required notices and record source provenance sufficient to identify the upstream project and revision. Upstream updates are reviewed and adopted deliberately rather than synchronized automatically.

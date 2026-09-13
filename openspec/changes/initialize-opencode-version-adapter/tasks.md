@@ -6,17 +6,17 @@
 - [x] 1.2 Trace the corresponding server behavior in OpenCode `v1.18.30` and `v2.0.3`, including execution timing, payload meaning, lifecycle, cleanup ownership, and unsupported surfaces.
 - [x] 1.3 Inspect `oh-my-opencode-slim` `v2.2.19` (`27d3658`) and classify reusable generic bridge mechanisms separately from application-specific behavior; record license/provenance requirements.
 - [x] 1.4 Update `design.md` and `specs/version-adaptation/spec.md` with only the evidence-backed initial capability matrix, keeping unresolved TUI v2 semantics explicitly unclaimed.
-- [ ] 1.5 Run `openspec validate initialize-opencode-version-adapter --type change --strict` and resolve any validation error before Phase 1.
+- [x] 1.5 Run `openspec validate initialize-opencode-version-adapter --type change --strict` and resolve any validation error before Phase 1.
 
 ## 2. Define the minimum shared contract
 
-- [ ] 2.1 Define the smallest shared types required by the approved capability set; verify no unused OpenCode API surface is exposed.
-- [ ] 2.2 Define explicit native, emulated, and unsupported support metadata for each implemented capability; verify required unsupported capabilities are representable before adapter setup.
+- [x] 2.1 Define the smallest shared types required by the approved capability set; verify no unused OpenCode API surface is exposed.
+- [x] 2.2 Define explicit native, emulated, and unsupported support metadata for each implemented capability; verify required unsupported capabilities are representable before adapter setup.
 - [ ] 2.3 Add contract tests for the shared observable semantics; verify the same suite can be run against each adapter that claims support.
-- [ ] 2.4 Establish the initial module boundaries from `design.md`; verify `contract/` does not import generation adapters, v1/v2 adapters do not import each other, and generation `adapter.ts` files contain composition rather than detailed capability mappings.
+- [x] 2.4 Establish the initial module boundaries from `design.md`; verify `contract/` does not import generation adapters, v1/v2 adapters do not import each other, and generation `adapter.ts` files contain composition rather than detailed capability mappings.
 - [ ] 2.5 Define lifecycle ownership for setup success, partial setup rollback, and idempotent disposal; verify lifecycle tests cover all three cases before runtime integration.
-- [ ] 2.6 Define stable adapter error categories for unsupported capability, initialization failure, and invalid host context; verify generation-specific failures can be retained as diagnostic causes without becoming consumer contracts.
-- [ ] 2.7 Define the documented public export boundary; verify consumers and tests do not depend on `internal/` or generation implementation paths unless an explicit public export is approved.
+- [x] 2.6 Define stable adapter error categories for unsupported capability, initialization failure, and invalid host context; verify generation-specific failures can be retained as diagnostic causes without becoming consumer contracts.
+- [x] 2.7 Define the documented public export boundary; verify consumers and tests do not depend on `internal/` or generation implementation paths unless an explicit public export is approved.
 
 ## 3. Establish the OpenCode v1 baseline
 
