@@ -14,7 +14,7 @@
 - [x] 2.2 Define explicit native, emulated, and unsupported support metadata for each implemented capability; verify required unsupported capabilities are representable before adapter setup.
 - [x] 2.3 Add contract tests for the shared observable semantics; verify the same suite can be run against each adapter that claims support.
 - [x] 2.4 Establish the initial module boundaries from `design.md`; verify `contract/` does not import generation adapters, v1/v2 adapters do not import each other, and generation `adapter.ts` files contain composition rather than detailed capability mappings.
-- [ ] 2.5 Define lifecycle ownership for setup success, partial setup rollback, and idempotent disposal; verify lifecycle tests cover all three cases before runtime integration.
+- [x] 2.5 Define lifecycle ownership for setup success, partial setup rollback, and idempotent disposal; verify lifecycle tests cover all three cases before runtime integration.
 - [x] 2.6 Define stable adapter error categories for unsupported capability, initialization failure, and invalid host context; verify generation-specific failures can be retained as diagnostic causes without becoming consumer contracts.
 - [x] 2.7 Define the documented public export boundary; verify consumers and tests do not depend on `internal/` or generation implementation paths unless an explicit public export is approved.
 
