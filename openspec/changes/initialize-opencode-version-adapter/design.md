@@ -177,6 +177,8 @@ Alternative considered: expose adapter internals early for flexibility.
 
 Rejected because consumers would acquire dependencies on implementation structure and make later responsibility splitting or adapter replacement unnecessarily breaking.
 
+Repository-internal generation tests are intentionally different from consumer imports. Tests under `tests/v1/` and `tests/v2/` MAY import the corresponding generation adapter and capability implementation paths directly when validating generation-specific mapping semantics. Those white-box imports do not make the referenced modules public API. Shared contract tests under `tests/contract/` MUST remain generation-independent.
+
 #### Phase 1 public contract boundary
 
 The initial package-root surface is limited to the evidence-backed capability identifiers, capability support states, required-capability validation, and the stable adapter error family. The root exports `CAPABILITIES`, `CapabilityId`, `RequiredCapabilities`, `CAPABILITY_SUPPORT`, `CapabilitySupport`, `CapabilitySupportMap`, `assertRequiredCapabilitiesSupported`, `ADAPTER_ERROR_CATEGORY`, `AdapterErrorCategory`, `VersionAdapterError`, `UnsupportedCapabilityError`, `AdapterInitializationError`, and `InvalidHostContextError`. `contract/` remains an implementation path rather than an additional documented consumer import path. No generation adapter, capability implementation module, client shim, TUI surface, or consumer-specific type is exported in Phase 1.

@@ -142,6 +142,13 @@ Internal modules and generation implementation details MUST remain replaceable w
 - **THEN** that export is added deliberately to the documented public surface
 - **AND** version-specific exports are not created preemptively for unused internals
 
+#### Scenario: Repository-internal generation mapping is tested
+
+- **WHEN** a test under `tests/v1/` or `tests/v2/` validates generation-specific adapter or capability behavior
+- **THEN** that test MAY import the matching generation implementation path directly
+- **AND** the white-box test import does not make that implementation path part of the documented consumer surface
+- **AND** shared tests under `tests/contract/` remain independent of generation implementation paths
+
 ### Requirement: Reused upstream compatibility code remains traceable and generic
 
 Code adapted from an upstream compatibility implementation MUST preserve applicable license and attribution requirements and MUST remain distinguishable from consumer-specific policy.

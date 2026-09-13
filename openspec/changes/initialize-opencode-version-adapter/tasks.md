@@ -16,7 +16,7 @@
 - [x] 2.4 Establish the initial module boundaries from `design.md`; verify `contract/` does not import generation adapters, v1/v2 adapters do not import each other, and generation `adapter.ts` files contain composition rather than detailed capability mappings.
 - [x] 2.5 Define lifecycle ownership for setup success, partial setup rollback, and idempotent disposal; verify lifecycle tests cover all three cases before runtime integration.
 - [x] 2.6 Define stable adapter error categories for unsupported capability, initialization failure, and invalid host context; verify generation-specific failures can be retained as diagnostic causes without becoming consumer contracts.
-- [x] 2.7 Define the documented public export boundary; verify consumers and tests do not depend on `internal/` or generation implementation paths unless an explicit public export is approved.
+- [x] 2.7 Define the documented public export boundary; verify consumers and shared contract tests do not depend on `internal/` or generation implementation paths, while repository-internal `tests/v1/` and `tests/v2/` may white-box test their matching generation internals without making them public exports.
 
 ## 3. Establish the OpenCode v1 baseline
 
