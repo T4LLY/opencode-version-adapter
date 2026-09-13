@@ -4,11 +4,10 @@ import {
   CAPABILITIES,
   CAPABILITY_SUPPORT,
   InvalidHostContextError,
-  UnsupportedCapabilityError,
-  VersionAdapterError,
   assertRequiredCapabilitiesSupported,
   type CapabilitySupportMap,
 } from "../../src/index";
+import { runCapabilityConformanceSuite } from "./capability-conformance";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -16,7 +15,7 @@ function assert(condition: unknown, message: string): asserts condition {
   }
 }
 
-// Synthetic map exercises all support states without claiming a generation mapping.
+// Synthetic target exercises every support state without claiming a generation mapping.
 const support = {
   [CAPABILITIES.serverLifecycle]: CAPABILITY_SUPPORT.native,
   [CAPABILITIES.hostEventDelivery]: CAPABILITY_SUPPORT.native,
@@ -30,34 +29,12 @@ const support = {
   [CAPABILITIES.workspaceRegistration]: CAPABILITY_SUPPORT.unsupported,
 } satisfies CapabilitySupportMap;
 
-assertRequiredCapabilitiesSupported(
-  [CAPABILITIES.serverLifecycle, CAPABILITIES.modelRequestGate],
+runCapabilityConformanceSuite({
   support,
-);
-
-let unsupported: unknown;
-try {
-  assertRequiredCapabilitiesSupported([CAPABILITIES.subagentDepth], support);
-} catch (error) {
-  unsupported = error;
-}
-
-assert(
-  unsupported instanceof UnsupportedCapabilityError,
-  "required unsupported capability must fail with UnsupportedCapabilityError",
-);
-assert(
-  unsupported instanceof VersionAdapterError,
-  "unsupported capability error must remain inside the stable adapter error family",
-);
-assert(
-  unsupported.category === ADAPTER_ERROR_CATEGORY.unsupportedCapability,
-  "unsupported capability error must expose its stable semantic category",
-);
-assert(
-  unsupported.capability === CAPABILITIES.subagentDepth,
-  "unsupported capability error must retain the failed capability id",
-);
+  assertRequired(required) {
+    assertRequiredCapabilitiesSupported(required, support);
+  },
+});
 
 const cause = new Error("native setup failed");
 const initialization = new AdapterInitializationError("adapter setup failed", {
