@@ -1,0 +1,25 @@
+schema: spec-driven
+
+context: |
+  Project: @xxx/opencode-version-adapter
+  Purpose: isolate OpenCode plugin API generation differences from consumer plugin business logic.
+  Scope: OpenCode only. Do not introduce abstractions for unrelated harnesses.
+  Development policy: add only capabilities required by real consumer plugins; do not mirror the complete OpenCode API speculatively.
+  Compatibility policy: compare observable semantics across OpenCode generations and preserve meaningful differences.
+  Failure policy: required unsupported capabilities fail closed rather than being silently ignored.
+  Initial consumer: Folder-Oriented Agents (FOA).
+
+rules:
+  proposal:
+    - Keep scope limited to OpenCode version compatibility and identify the real consumer requirement driving each capability.
+    - Do not propose APIs solely for completeness.
+  specs:
+    - Describe externally observable behavior and compatibility guarantees, not internal class or file structure.
+    - Add requirements only for capabilities required by actual consumers.
+    - Treat similar API names as insufficient evidence of equivalent semantics.
+  design:
+    - Keep OpenCode generation-specific behavior behind isolated adapter boundaries.
+    - Prefer proven upstream compatibility code when semantics match, while excluding upstream consumer-specific behavior.
+    - Re-evaluate module boundaries before allowing a source file to grow beyond approximately 600 LOC.
+  tasks:
+    - Verify behavior against actual OpenCode APIs or runtimes where practical; compilation alone is insufficient.
