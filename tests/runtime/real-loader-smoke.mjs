@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import {
   appendFile,
   mkdir,
@@ -15,6 +16,7 @@ const EXPECTED_V1 = "1.18.30";
 const EXPECTED_V2 = "2.0.3";
 const MARKER_ENV = "OPENCODE_VERSION_ADAPTER_SMOKE_MARKER";
 const TIMEOUT_MS = 60_000;
+const POLL_INTERVAL_MS = 50;
 const OUTPUT_LIMIT = 256 * 1024;
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -32,7 +34,6 @@ const runtimes = [
     label: "v2",
     command: process.env.OPENCODE_V2_COMMAND ?? "opencode2",
     expectedVersion: EXPECTED_V2,
-    args: ["models", "--standalone"],
     expectedSurface: "setup",
   },
 ];
@@ -46,55 +47,257 @@ function commandText(command, args) {
   return [command, ...args].join(" ");
 }
 
-async function runCommand(command, args, options = {}) {
-  return await new Promise((resolveRun, rejectRun) => {
-    const child = spawn(command, args, {
-      cwd: options.cwd,
-      env: options.env,
-      windowsHide: true,
-      shell: process.platform === "win32",
-    });
+function windowsCommandLine(command, args) {
+  const values = [command, ...args].map(String);
+  for (const value of values) {
+    if (/["\r\n]/u.test(value)) {
+      throw new Error(`unsupported quote or newline in Windows command token: ${value}`);
+    }
+  }
 
-    let stdout = "";
-    let stderr = "";
-    let timedOut = false;
+  const tokens = values.map((value) =>
+    /[\s&|<>^()]/u.test(value) ? `"${value}"` : value,
+  );
+  const line = tokens.join(" ");
 
-    child.stdout?.setEncoding("utf8");
-    child.stderr?.setEncoding("utf8");
-    child.stdout?.on("data", (chunk) => {
-      stdout = appendLimited(stdout, chunk);
-    });
-    child.stderr?.on("data", (chunk) => {
-      stderr = appendLimited(stderr, chunk);
-    });
+  // cmd.exe /s /c applies special stripping when the command itself starts
+  // with a quote. Add the documented outer pair only for that case.
+  return tokens[0].startsWith('"') ? `"${line}"` : line;
+}
 
-    const timer = setTimeout(() => {
-      timedOut = true;
-      child.kill();
-    }, TIMEOUT_MS);
+function spawnCommand(command, args, options = {}) {
+  const windows = process.platform === "win32";
+  const invocation = windows
+    ? {
+        command: process.env.ComSpec ?? "cmd.exe",
+        args: ["/d", "/s", "/c", windowsCommandLine(command, args)],
+      }
+    : { command, args };
 
+  return spawn(invocation.command, invocation.args, {
+    cwd: options.cwd,
+    env: options.env,
+    detached: !windows,
+    windowsHide: true,
+    windowsVerbatimArguments: windows,
+    shell: false,
+  });
+}
+
+function startCommand(command, args, options = {}) {
+  const child = spawnCommand(command, args, options);
+  let stdout = "";
+  let stderr = "";
+
+  child.stdout?.setEncoding("utf8");
+  child.stderr?.setEncoding("utf8");
+  child.stdout?.on("data", (chunk) => {
+    stdout = appendLimited(stdout, chunk);
+  });
+  child.stderr?.on("data", (chunk) => {
+    stderr = appendLimited(stderr, chunk);
+  });
+
+  const completion = new Promise((resolveRun, rejectRun) => {
     child.once("error", (error) => {
-      clearTimeout(timer);
       rejectRun(
         new Error(
           `failed to start ${commandText(command, args)}: ${error.message}`,
         ),
       );
     });
-
     child.once("close", (code, signal) => {
-      clearTimeout(timer);
-      if (timedOut) {
-        rejectRun(
-          new Error(
-            `${commandText(command, args)} timed out after ${TIMEOUT_MS} ms`,
-          ),
-        );
-        return;
-      }
       resolveRun({ code, signal, stdout, stderr });
     });
   });
+
+  return {
+    child,
+    completion,
+    snapshot() {
+      return { stdout, stderr };
+    },
+  };
+}
+
+async function terminateChild(child) {
+  if (!child.pid || child.exitCode !== null || child.signalCode !== null) return;
+
+  if (process.platform !== "win32") {
+    try {
+      process.kill(-child.pid, "SIGTERM");
+    } catch {
+      child.kill("SIGTERM");
+    }
+    return;
+  }
+
+  await new Promise((resolveTermination) => {
+    const killer = spawn(
+      "taskkill.exe",
+      ["/PID", String(child.pid), "/T", "/F"],
+      { stdio: "ignore", windowsHide: true, shell: false },
+    );
+    killer.once("error", () => {
+      child.kill();
+      resolveTermination();
+    });
+    killer.once("close", () => resolveTermination());
+  });
+}
+
+function delay(ms) {
+  return new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
+}
+
+function timeoutError(command, args, output) {
+  return new Error(
+    [
+      `${commandText(command, args)} timed out after ${TIMEOUT_MS} ms`,
+      output.stdout && `stdout:\n${output.stdout}`,
+      output.stderr && `stderr:\n${output.stderr}`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  );
+}
+
+async function runCommand(command, args, options = {}) {
+  const running = startCommand(command, args, options);
+  let timer;
+  try {
+    return await Promise.race([
+      running.completion,
+      new Promise((_, rejectTimeout) => {
+        timer = setTimeout(async () => {
+          const output = running.snapshot();
+          await terminateChild(running.child);
+          rejectTimeout(timeoutError(command, args, output));
+        }, TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function runCommandUntil(command, args, completeWhen, options = {}) {
+  const running = startCommand(command, args, options);
+  const deadline = Date.now() + TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    if (await completeWhen()) {
+      await terminateChild(running.child);
+      return { observed: true, ...running.snapshot() };
+    }
+
+    const completed = await Promise.race([
+      running.completion.then((result) => ({ completed: true, result })),
+      delay(POLL_INTERVAL_MS).then(() => ({ completed: false })),
+    ]);
+
+    if (completed.completed) {
+      return { observed: await completeWhen(), ...completed.result };
+    }
+  }
+
+  const output = running.snapshot();
+  await terminateChild(running.child);
+  throw timeoutError(command, args, output);
+}
+
+function readReadyUrl(stdout) {
+  for (const line of stdout.split(/\r?\n/u)) {
+    if (!line.trim()) continue;
+    try {
+      const value = JSON.parse(line);
+      if (
+        value !== null &&
+        typeof value === "object" &&
+        typeof value.url === "string"
+      ) {
+        return value.url;
+      }
+    } catch {
+      // `serve --stdio` emits one JSON readiness line; other output is diagnostic.
+    }
+  }
+  return undefined;
+}
+
+async function waitForReadyUrl(runtime, args, running) {
+  const deadline = Date.now() + TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    const readyUrl = readReadyUrl(running.snapshot().stdout);
+    if (readyUrl) return readyUrl;
+
+    const completed = await Promise.race([
+      running.completion.then((result) => ({ completed: true, result })),
+      delay(POLL_INTERVAL_MS).then(() => ({ completed: false })),
+    ]);
+
+    if (completed.completed) {
+      const readyUrlAfterExit = readReadyUrl(completed.result.stdout);
+      if (readyUrlAfterExit) return readyUrlAfterExit;
+      throw new Error(
+        [
+          `${runtime.label}: ${commandText(runtime.command, args)} exited before readiness`,
+          `exit=${String(completed.result.code)} signal=${String(completed.result.signal)}`,
+          completed.result.stdout && `stdout:\n${completed.result.stdout}`,
+          completed.result.stderr && `stderr:\n${completed.result.stderr}`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      );
+    }
+  }
+
+  const output = running.snapshot();
+  await terminateChild(running.child);
+  throw timeoutError(runtime.command, args, output);
+}
+
+async function waitForSurface(runtime, marker, running) {
+  const deadline = Date.now() + TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    const surfaces = await readSurfaces(marker);
+    if (surfaces.includes(runtime.expectedSurface)) return;
+
+    const completed = await Promise.race([
+      running.completion.then((result) => ({ completed: true, result })),
+      delay(POLL_INTERVAL_MS).then(() => ({ completed: false })),
+    ]);
+
+    if (completed.completed) {
+      const surfacesAfterExit = await readSurfaces(marker);
+      if (surfacesAfterExit.includes(runtime.expectedSurface)) return;
+      throw new Error(
+        [
+          `${runtime.label}: server exited before invoking ${runtime.expectedSurface}`,
+          `observed ${surfacesAfterExit.join(", ") || "nothing"}`,
+          `exit=${String(completed.result.code)} signal=${String(completed.result.signal)}`,
+          completed.result.stdout && `stdout:\n${completed.result.stdout}`,
+          completed.result.stderr && `stderr:\n${completed.result.stderr}`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      );
+    }
+  }
+
+  const output = running.snapshot();
+  await terminateChild(running.child);
+  throw new Error(
+    [
+      `${runtime.label}: timed out waiting for ${runtime.expectedSurface}`,
+      output.stdout && `stdout:\n${output.stdout}`,
+      output.stderr && `stderr:\n${output.stderr}`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  );
 }
 
 function assertSuccess(runtime, args, result) {
@@ -178,6 +381,49 @@ async function readSurfaces(marker) {
     .filter(Boolean);
 }
 
+async function runV1Smoke(runtime, workspace, marker, env) {
+  const args = ["models"];
+  const result = await runCommandUntil(
+    runtime.command,
+    args,
+    async () => {
+      const surfaces = await readSurfaces(marker);
+      return surfaces.includes(runtime.expectedSurface);
+    },
+    { cwd: workspace, env },
+  );
+
+  if (result.observed) return;
+  assertSuccess(runtime, args, result);
+  const surfaces = await readSurfaces(marker);
+  throw new Error(
+    `${runtime.label}: real loader did not invoke ${runtime.expectedSurface}; observed ${surfaces.join(", ") || "nothing"}`,
+  );
+}
+
+async function runV2Smoke(runtime, workspace, marker, env) {
+  const password = randomBytes(32).toString("base64url");
+  const serverArgs = ["serve", "--stdio", "--port", "0"];
+  const serverEnv = { ...env, OPENCODE_PASSWORD: password };
+  const server = startCommand(runtime.command, serverArgs, {
+    cwd: workspace,
+    env: serverEnv,
+  });
+
+  try {
+    const url = await waitForReadyUrl(runtime, serverArgs, server);
+    const triggerArgs = ["models", "--server", url];
+    const trigger = await runCommand(runtime.command, triggerArgs, {
+      cwd: workspace,
+      env: serverEnv,
+    });
+    assertSuccess(runtime, triggerArgs, trigger);
+    await waitForSurface(runtime, marker, server);
+  } finally {
+    await terminateChild(server.child);
+  }
+}
+
 async function runRuntimeSmoke(runtime, pluginSource) {
   await assertVersion(runtime);
 
@@ -197,17 +443,11 @@ async function runRuntimeSmoke(runtime, pluginSource) {
       OPENCODE_CONFIG_DIR: configDir,
       [MARKER_ENV]: marker,
     };
-    const result = await runCommand(runtime.command, runtime.args, {
-      cwd: workspace,
-      env,
-    });
-    assertSuccess(runtime, runtime.args, result);
 
-    const surfaces = await readSurfaces(marker);
-    if (!surfaces.includes(runtime.expectedSurface)) {
-      throw new Error(
-        `${runtime.label}: real loader did not invoke ${runtime.expectedSurface}; observed ${surfaces.join(", ") || "nothing"}`,
-      );
+    if (runtime.label === "v1") {
+      await runV1Smoke(runtime, workspace, marker, env);
+    } else {
+      await runV2Smoke(runtime, workspace, marker, env);
     }
 
     console.log(
