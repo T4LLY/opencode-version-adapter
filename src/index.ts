@@ -13,6 +13,7 @@ export {
   type AgentDefinition,
   type AgentDefinitions,
   type AgentMode,
+  type AgentModelSelection,
   type AgentRegistration,
   type AgentRegistrationContext,
 } from "./contract/agent-registration";

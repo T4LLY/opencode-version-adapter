@@ -8,6 +8,12 @@ export const AGENT_MODES = Object.freeze({
 
 export type AgentMode = (typeof AGENT_MODES)[keyof typeof AGENT_MODES];
 
+/** Model selection is atomic across generations: a variant cannot exist without a model. */
+export interface AgentModelSelection {
+  readonly model: string;
+  readonly variant?: string;
+}
+
 /**
  * Generation-independent Agent fields required by the approved FOA consumer.
  *
@@ -16,8 +22,7 @@ export type AgentMode = (typeof AGENT_MODES)[keyof typeof AGENT_MODES];
  * policy.
  */
 export interface AgentDefinition {
-  readonly model?: string;
-  readonly variant?: string;
+  readonly model?: AgentModelSelection;
   readonly temperature?: number;
   readonly topP?: number;
   readonly prompt?: string;

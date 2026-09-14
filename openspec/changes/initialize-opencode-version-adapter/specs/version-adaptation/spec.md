@@ -272,6 +272,13 @@ The initial agent capability MUST support registering the consumer-provided agen
 - **THEN** the base Agent registration representation contains only non-permission Agent fields
 - **AND** ordered permission conversion remains owned by the separate agent-permission capability
 
+#### Scenario: Agent variant is tied to an explicit model selection
+
+- **WHEN** a consumer selects an Agent model variant through the shared registration contract
+- **THEN** the variant is nested inside the explicit model selection rather than represented as an independent Agent field
+- **AND** the shared contract cannot express a variant without also naming the model it modifies
+- **AND** the v1 adapter expands that selection to native `model` plus `variant` fields while the v2 adapter maps it to one native `Model.Ref`
+
 #### Scenario: Ordered child permission rules are mapped
 
 - **WHEN** a consumer supplies ordered permission intent whose behavior depends on later matching rules overriding earlier matching rules

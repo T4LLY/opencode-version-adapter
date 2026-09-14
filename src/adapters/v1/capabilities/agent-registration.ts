@@ -10,8 +10,12 @@ export function toV1AgentConfig(
 ): Record<string, unknown> {
   const mapped: Record<string, unknown> = {};
 
-  if (definition.model !== undefined) mapped.model = definition.model;
-  if (definition.variant !== undefined) mapped.variant = definition.variant;
+  if (definition.model !== undefined) {
+    mapped.model = definition.model.model;
+    if (definition.model.variant !== undefined) {
+      mapped.variant = definition.model.variant;
+    }
+  }
   if (definition.temperature !== undefined) {
     mapped.temperature = definition.temperature;
   }

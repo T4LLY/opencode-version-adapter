@@ -21,8 +21,7 @@ function assertJSONEqual(actual: unknown, expected: unknown, message: string): v
 function assertStableFieldMapping(): void {
   const options = { reasoningEffort: "high" };
   const mapped = toV1AgentConfig({
-    model: "openai/gpt-5.6-sol",
-    variant: "high",
+    model: { model: "openai/gpt-5.6-sol", variant: "high" },
     temperature: 0.2,
     topP: 0.8,
     prompt: "worker prompt",

@@ -47,3 +47,15 @@ export {
   type V2ToolHookRegistration,
   type V2ToolHooks,
 } from "./tool-execution";
+
+export {
+  applyV2AgentDefinition,
+  createV2AgentRegistrationCapability,
+  toV2AgentModelRef,
+  type V2AgentContext,
+  type V2AgentDomain,
+  type V2AgentEditor,
+  type V2AgentInfo,
+  type V2AgentModelRef,
+  type V2AgentRegistrationHandle,
+} from "./capabilities/agent-registration";
