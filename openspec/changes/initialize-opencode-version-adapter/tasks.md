@@ -26,9 +26,9 @@
 ## 4. Implement the OpenCode v2 adapter
 
 - [x] 4.1 Review the current `oh-my-opencode-slim` v2 bridge and identify generic versus application-specific components; verify reused code is license-compatible, required notices are retained, and source project/path/revision provenance is recorded.
-- [ ] 4.2 Implement only the generic v2 mappings required by the approved capability set; verify no oh-my-opencode-slim-specific orchestration, background jobs, prompts, or policy is included.
-- [ ] 4.3 Add v2 adapter tests for each claimed native or emulated capability; verify unsupported required capabilities fail explicitly.
-- [ ] 4.4 Before adding each new capability mapping, review responsibility concentration against `design.md`; split capability mapping, lifecycle ownership, or shim responsibilities before implementation when a module is becoming a catch-all or approaches approximately 600 LOC.
+- [x] 4.2 Implement only the generic v2 mappings required by the approved capability set; verify no oh-my-opencode-slim-specific orchestration, background jobs, prompts, or policy is included.
+- [x] 4.3 Add v2 adapter tests for each claimed native or emulated capability; verify unsupported required capabilities fail explicitly.
+- [x] 4.4 Before adding each new capability mapping, review responsibility concentration against `design.md`; split capability mapping, lifecycle ownership, or shim responsibilities before implementation when a module is becoming a catch-all or approaches approximately 600 LOC.
 
 ## 5. Verify real runtime compatibility
 

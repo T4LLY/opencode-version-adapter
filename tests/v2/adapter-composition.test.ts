@@ -1,8 +1,4 @@
-import {
-  CAPABILITIES,
-  CAPABILITY_SUPPORT,
-  type CapabilitySupportMap,
-} from "../../src/contract/capabilities";
+import { CAPABILITIES } from "../../src/contract/capabilities";
 import {
   ADAPTER_ERROR_CATEGORY,
   AdapterInitializationError,
@@ -10,6 +6,7 @@ import {
 } from "../../src/contract/errors";
 import {
   createV2Adapter,
+  OPEN_CODE_V2_CAPABILITY_SUPPORT,
   OPEN_CODE_V2_GENERATION,
   type V2CapabilityAdapter,
 } from "../../src/adapters/v2";
@@ -20,18 +17,7 @@ function assert(condition: unknown, message: string): asserts condition {
   }
 }
 
-const support = {
-  [CAPABILITIES.serverLifecycle]: CAPABILITY_SUPPORT.native,
-  [CAPABILITIES.hostEventDelivery]: CAPABILITY_SUPPORT.native,
-  [CAPABILITIES.modelRequestGate]: CAPABILITY_SUPPORT.native,
-  [CAPABILITIES.sessionAgentModelObservation]: CAPABILITY_SUPPORT.native,
-  [CAPABILITIES.toolBeforeExecution]: CAPABILITY_SUPPORT.native,
-  [CAPABILITIES.successfulToolCompletion]: CAPABILITY_SUPPORT.native,
-  [CAPABILITIES.agentRegistration]: CAPABILITY_SUPPORT.native,
-  [CAPABILITIES.agentPermissionRules]: CAPABILITY_SUPPORT.native,
-  [CAPABILITIES.subagentDepth]: CAPABILITY_SUPPORT.unsupported,
-  [CAPABILITIES.workspaceRegistration]: CAPABILITY_SUPPORT.unsupported,
-} satisfies CapabilitySupportMap;
+const support = OPEN_CODE_V2_CAPABILITY_SUPPORT;
 
 interface TestContext {
   readonly events: string[];
@@ -146,30 +132,39 @@ async function assertPartialSetupRollback(): Promise<void> {
 }
 
 async function assertUnsupportedPreflight(): Promise<void> {
-  const context: TestContext = { events: [] };
-  const adapter = createV2Adapter({
-    capabilities: support,
-    capabilityAdapters: [capabilityAdapter(CAPABILITIES.serverLifecycle)],
-  });
-
-  let error: unknown;
-  try {
-    await adapter.setup({
-      context,
-      requiredCapabilities: [CAPABILITIES.subagentDepth],
+  for (const unsupported of [
+    CAPABILITIES.subagentDepth,
+    CAPABILITIES.workspaceRegistration,
+  ] as const) {
+    const context: TestContext = { events: [] };
+    const adapter = createV2Adapter({
+      capabilities: support,
+      capabilityAdapters: [capabilityAdapter(CAPABILITIES.serverLifecycle)],
     });
-  } catch (caught) {
-    error = caught;
-  }
 
-  assert(
-    error instanceof UnsupportedCapabilityError,
-    "unsupported v2 requirements must fail before capability setup",
-  );
-  assert(
-    context.events.length === 0,
-    "unsupported v2 requirements must not acquire resources",
-  );
+    let error: unknown;
+    try {
+      await adapter.setup({
+        context,
+        requiredCapabilities: [CAPABILITIES.serverLifecycle, unsupported],
+      });
+    } catch (caught) {
+      error = caught;
+    }
+
+    assert(
+      error instanceof UnsupportedCapabilityError,
+      `${unsupported} must fail as an unsupported v2 requirement`,
+    );
+    assert(
+      error.capability === unsupported,
+      `${unsupported} failure must retain the unsupported capability id`,
+    );
+    assert(
+      context.events.length === 0,
+      `${unsupported} must fail before any supported v2 capability acquires resources`,
+    );
+  }
 }
 
 async function assertCleanupAttemptsEveryResource(): Promise<void> {

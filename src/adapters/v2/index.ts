@@ -7,6 +7,8 @@ export {
   type V2CapabilityAdapter,
 } from "./adapter";
 
+export { OPEN_CODE_V2_CAPABILITY_SUPPORT } from "./support";
+
 export {
   createV2ServerDefinition,
   createV2ServerLifecycleCapability,

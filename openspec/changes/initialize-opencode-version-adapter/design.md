@@ -132,6 +132,10 @@ The following upstream behavior remains application-specific and is not part of 
 
 The Phase 3 composition skeleton is independently implemented from this package's existing shared lifecycle contract and does not copy or substantially adapt upstream source code. Therefore no upstream source block or license notice is embedded in production code at this step. If a later capability substantially adapts an upstream block, that capability module must record the exact source path and `27d3658` provenance and retain the required MIT notice.
 
+At completion of the initial v2 server mappings, the generation records one explicit support map for the approved capability inventory: eight capabilities are native, while `subagent-depth` and `workspace-registration` are unsupported at the pinned v2.0.3 baseline. Unsupported capabilities have no no-op mapping. Required-capability preflight rejects them before any supported mapping can acquire a host resource. This classification follows the v2.0.3 Promise plugin `Context`, which exposes no workspace registration domain, and the pinned v2 config/Agent schemas, which expose no plugin-controllable global subagent-depth field.
+
+The v2 capability implementation remains split by semantic responsibility after the initial mapping set. `adapter.ts` remains composition/lifecycle only and is 144 LOC at this checkpoint; the largest detailed capability module is `agent-registration.ts` at 142 LOC. No v2 production module approaches the approximately 600 LOC responsibility guardrail.
+
 ## Goals / Non-Goals
 
 ### Goals
