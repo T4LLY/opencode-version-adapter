@@ -1,4 +1,14 @@
 export {
+  AGENT_PERMISSION_ACTIONS,
+  type AgentPermissionAction,
+  type AgentPermissionPatternRule,
+  type AgentPermissionRuleGroup,
+  type AgentPermissionRules,
+  type AgentPermissionRulesByAgent,
+  type AgentPermissionRulesProvider,
+} from "./contract/agent-permission";
+
+export {
   AGENT_MODES,
   type AgentDefinition,
   type AgentDefinitions,

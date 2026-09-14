@@ -270,6 +270,12 @@ The initial agent capability MUST support registering the consumer-provided agen
 - **THEN** the adapter preserves that observable ordering on every generation that claims support
 - **AND** representation changes such as a generation-specific action name do not change the allow/deny result
 
+#### Scenario: Permission mapping does not create an Agent
+
+- **WHEN** ordered permission intent targets an Agent that is not present in the generation registration plan
+- **THEN** permission mapping fails before mutating host Agent configuration
+- **AND** the permission capability does not create a placeholder Agent as a side effect
+
 ### Requirement: Initial support classifications are evidence-backed
 
 For the Phase 0 OpenCode baselines, the adapter specification records the following support classifications for the approved semantic capabilities. These classifications MUST be revalidated before broader runtime versions are claimed.
