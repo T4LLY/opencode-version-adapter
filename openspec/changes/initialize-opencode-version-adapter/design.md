@@ -115,6 +115,8 @@ The local adapter may reuse these generic architectural ideas only when a concre
 - one small bridge per host domain rather than consumer-side generation branching
 - explicit structural host-context checks before a domain is used
 
+The first v2 mappings keep lifecycle and event delivery separate. The server definition maps one generation adapter setup to the v2 `{ id, setup }` boundary and returns the adapter handle as the host-owned cleanup. Host events are consumed from the v2 event subscription stream and delivered opaquely; stopping the subscription belongs to adapter cleanup, while consumer-specific event interpretation remains outside the package.
+
 The following upstream behavior remains application-specific and is not part of the reusable adapter boundary:
 
 - reconstructing a broad v1 `PluginInput` client shim

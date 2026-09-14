@@ -6,3 +6,15 @@ export {
   type V2AdapterSetupInput,
   type V2CapabilityAdapter,
 } from "./adapter";
+
+export {
+  createV2ServerDefinition,
+  createV2ServerLifecycleCapability,
+  type V2ServerDefinition,
+} from "./capabilities/server-lifecycle";
+
+export {
+  createV2HostEventDeliveryCapability,
+  type V2EventDomain,
+  type V2HostEventContext,
+} from "./capabilities/host-event-delivery";
