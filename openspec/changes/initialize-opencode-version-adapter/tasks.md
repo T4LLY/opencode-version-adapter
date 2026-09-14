@@ -20,7 +20,7 @@
 
 ## 3. Establish the OpenCode v1 baseline
 
-- [ ] 3.1 Implement only the v1 mappings required by the approved capability set; verify existing FOA behavior remains unchanged in v1-focused tests.
+- [x] 3.1 Implement only the v1 mappings required by the approved capability set; verify existing FOA behavior remains unchanged in v1-focused tests.
 - [x] 3.2 Evaluate `opencode-plugin-compat` only for required v1 behavior and use it only where its semantics match; verify no dependency is added solely for unused API coverage.
 
 ## 4. Implement the OpenCode v2 adapter

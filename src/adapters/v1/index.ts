@@ -6,3 +6,5 @@ export {
   type V1AdapterSetupInput,
   type V1CapabilityAdapter,
 } from "./adapter";
+
+export { OPEN_CODE_V1_CAPABILITY_SUPPORT } from "./support";
