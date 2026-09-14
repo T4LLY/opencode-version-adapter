@@ -18,3 +18,19 @@ export {
   type V2EventDomain,
   type V2HostEventContext,
 } from "./capabilities/host-event-delivery";
+
+export {
+  createV2ModelRequestGateCapability,
+} from "./capabilities/model-request-gate";
+
+export {
+  createV2SessionAgentModelObservationCapability,
+} from "./capabilities/session-agent-model-observation";
+
+export {
+  type V2SessionHookContext,
+  type V2SessionHookDomain,
+  type V2SessionHooks,
+  type V2SessionHookRegistration,
+  type V2SessionModelIdentityInput,
+} from "./session-model";
