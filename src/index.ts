@@ -46,3 +46,10 @@ export {
   type ToolBeforeExecution,
   type ToolBeforeExecutionInput,
 } from "./contract/tool-execution";
+
+export {
+  type LocalWorkspaceTarget,
+  type WorkspaceAdapter,
+  type WorkspaceInfo,
+  type WorkspaceRegistration,
+} from "./contract/workspace-registration";

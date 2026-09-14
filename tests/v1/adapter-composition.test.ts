@@ -13,6 +13,10 @@ import {
   OPEN_CODE_V1_GENERATION,
   type V1CapabilityAdapter,
 } from "../../src/adapters/v1";
+import {
+  createV1WorkspaceRegistrationCapability,
+  type V1WorkspaceRegistrationContext,
+} from "../../src/adapters/v1/capabilities/workspace-registration";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
@@ -175,8 +179,140 @@ async function assertUnsupportedPreflight(): Promise<void> {
   );
 }
 
+
+async function assertIrreversibleWorkspaceRegistrationCommitsLast(): Promise<void> {
+  interface WorkspaceContext extends TestContext, V1WorkspaceRegistrationContext {}
+
+  const workspaceSupport = {
+    ...support,
+    [CAPABILITIES.workspaceRegistration]: CAPABILITY_SUPPORT.native,
+  } satisfies CapabilitySupportMap;
+  const events: string[] = [];
+  const context: WorkspaceContext = {
+    events,
+    experimental_workspace: {
+      register(type) {
+        events.push(`register:${type}`);
+      },
+    },
+  };
+  const workspace = createV1WorkspaceRegistrationCapability({
+    type: "demand",
+    adapter: {
+      name: "Demand Workspace",
+      description: "Demand",
+      configure(info) {
+        return info;
+      },
+      create() {},
+      remove() {},
+      target() {
+        return { type: "local", directory: "/tmp/demand" };
+      },
+    },
+  });
+  const reversible: V1CapabilityAdapter<WorkspaceContext> = {
+    capability: CAPABILITIES.serverLifecycle,
+    install(input) {
+      input.events.push("install:server-lifecycle");
+      return () => {
+        input.events.push("cleanup:server-lifecycle");
+      };
+    },
+  };
+  const adapter = createV1Adapter<WorkspaceContext>({
+    capabilities: workspaceSupport,
+    capabilityAdapters: [workspace, reversible],
+  });
+
+  const handle = await adapter.setup({
+    context,
+    requiredCapabilities: [
+      CAPABILITIES.workspaceRegistration,
+      CAPABILITIES.serverLifecycle,
+    ],
+  });
+
+  assert(
+    events.join("|") === "install:server-lifecycle|register:demand",
+    "v1 must defer irreversible Workspace registration until reversible setup succeeds",
+  );
+
+  await handle.dispose();
+  assert(
+    events.join("|") ===
+      "install:server-lifecycle|register:demand|cleanup:server-lifecycle",
+    "dispose must release owned resources without fabricating Workspace unregister",
+  );
+}
+
+async function assertWorkspaceRegistrationIsSkippedWhenEarlierSetupFails(): Promise<void> {
+  interface WorkspaceContext extends TestContext, V1WorkspaceRegistrationContext {}
+
+  const workspaceSupport = {
+    ...support,
+    [CAPABILITIES.workspaceRegistration]: CAPABILITY_SUPPORT.native,
+  } satisfies CapabilitySupportMap;
+  const events: string[] = [];
+  const context: WorkspaceContext = {
+    events,
+    experimental_workspace: {
+      register(type) {
+        events.push(`register:${type}`);
+      },
+    },
+  };
+  const workspace = createV1WorkspaceRegistrationCapability({
+    type: "demand",
+    adapter: {
+      name: "Demand Workspace",
+      description: "Demand",
+      configure(info) {
+        return info;
+      },
+      create() {},
+      remove() {},
+      target() {
+        return { type: "local", directory: "/tmp/demand" };
+      },
+    },
+  });
+  const failing: V1CapabilityAdapter<WorkspaceContext> = {
+    capability: CAPABILITIES.serverLifecycle,
+    install(input) {
+      input.events.push("install:server-lifecycle");
+      throw new Error("reversible setup failed");
+    },
+  };
+  const adapter = createV1Adapter<WorkspaceContext>({
+    capabilities: workspaceSupport,
+    capabilityAdapters: [workspace, failing],
+  });
+
+  let error: unknown;
+  try {
+    await adapter.setup({
+      context,
+      requiredCapabilities: [
+        CAPABILITIES.workspaceRegistration,
+        CAPABILITIES.serverLifecycle,
+      ],
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  assert(error instanceof AdapterInitializationError, "setup failure must remain categorized");
+  assert(
+    events.join("|") === "install:server-lifecycle",
+    "failed reversible setup must not commit Workspace registration",
+  );
+}
+
 void (async () => {
   await assertCompositionAndDisposal();
   await assertPartialSetupRollback();
   await assertUnsupportedPreflight();
+  await assertIrreversibleWorkspaceRegistrationCommitsLast();
+  await assertWorkspaceRegistrationIsSkippedWhenEarlierSetupFails();
 })();

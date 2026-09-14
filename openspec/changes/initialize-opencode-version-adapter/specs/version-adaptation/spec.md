@@ -78,21 +78,29 @@ The adapter MUST provide compatibility only among OpenCode plugin API generation
 - **THEN** that package may compose `opencode-version-adapter`
 - **AND** multi-harness behavior is not added to this adapter solely for that purpose
 
-### Requirement: Lifecycle ownership is explicit and reversible
+### Requirement: Lifecycle ownership is explicit and reversible where the host permits reversal
 
-The adapter MUST present a consistent setup-to-dispose lifecycle for capabilities that acquire hooks, subscriptions, registrations, or other resources, regardless of the native lifecycle shape of the active OpenCode generation.
+The adapter MUST present a consistent setup-to-dispose lifecycle for adapter-owned hooks, subscriptions, and other releasable resources regardless of the native lifecycle shape of the active OpenCode generation. A generation-native registration that the host owns and exposes no unregister operation for MUST NOT be represented by a fabricated cleanup. Such an irreversible registration MUST be deferred until every rollback-capable setup step has succeeded so a failed setup attempt does not leave a partially active adapter behind.
 
 #### Scenario: Setup succeeds
 
-- **WHEN** adapter setup installs one or more owned resources successfully
+- **WHEN** adapter setup installs one or more adapter-owned releasable resources successfully
 - **THEN** exactly one generation-level cleanup owner is responsible for releasing those resources
 - **AND** consumer code does not need to know generation-specific teardown behavior
 
 #### Scenario: Setup fails after partial installation
 
-- **WHEN** adapter setup fails after one or more owned resources have already been installed
+- **WHEN** adapter setup fails after one or more adapter-owned releasable resources have already been installed
 - **THEN** the adapter releases resources installed by that failed setup attempt before surfacing the failure
+- **AND** any generation-native irreversible registration has not yet been committed
 - **AND** it does not leave a partially active adapter behind
+
+#### Scenario: Host registration has no unregister operation
+
+- **GIVEN** a generation exposes a registration operation without a matching unregister operation
+- **WHEN** that registration participates in adapter setup
+- **THEN** the adapter performs it only after all rollback-capable setup steps succeed
+- **AND** successful registration lifetime remains owned by the host rather than by a fabricated adapter cleanup
 
 #### Scenario: Cleanup is requested more than once
 
@@ -353,7 +361,14 @@ The workspace capability MUST adapt only the host registration and lifecycle bou
 
 - **WHEN** a generation supports workspace adapter registration
 - **THEN** demand-runtime remains responsible for configure, create, target, remove, recovery, garbage collection, paths, write scope, and baseline behavior
-- **AND** the version adapter owns only generation-specific host registration and cleanup semantics
+- **AND** the version adapter owns only generation-specific host registration and lifecycle translation
+
+#### Scenario: OpenCode v1 workspace registration is committed
+
+- **GIVEN** OpenCode v1.18.30 exposes `experimental_workspace.register` but no unregister operation
+- **WHEN** workspace registration is required during v1 adapter setup
+- **THEN** the adapter registers the consumer-owned workspace adapter only after every rollback-capable required mapping has installed successfully
+- **AND** disposal does not fabricate an unregister operation that OpenCode v1 does not provide
 
 ### Requirement: TUI adaptation is a separate runtime boundary
 

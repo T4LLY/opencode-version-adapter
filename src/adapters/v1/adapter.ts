@@ -1,4 +1,5 @@
 import {
+  CAPABILITIES,
   assertRequiredCapabilitiesSupported,
   type CapabilityId,
   type CapabilitySupportMap,
@@ -64,9 +65,17 @@ export function createV1Adapter<Context>(
       );
 
       const cleanups: Cleanup[] = [];
+      const setupOrder = [
+        ...input.requiredCapabilities.filter(
+          (capability) => capability !== CAPABILITIES.workspaceRegistration,
+        ),
+        ...input.requiredCapabilities.filter(
+          (capability) => capability === CAPABILITIES.workspaceRegistration,
+        ),
+      ];
 
       try {
-        for (const capability of input.requiredCapabilities) {
+        for (const capability of setupOrder) {
           const adapter = capabilityAdapters.get(capability);
           if (adapter === undefined) {
             throw new Error(
