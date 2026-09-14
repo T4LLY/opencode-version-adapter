@@ -1,4 +1,5 @@
 import {
+  CAPABILITIES,
   assertRequiredCapabilitiesSupported,
   type CapabilityId,
   type CapabilitySupportMap,
@@ -63,9 +64,10 @@ export function createV2Adapter<Context>(
       );
 
       const cleanups: Cleanup[] = [];
+      const setupOrder = orderCapabilities(input.requiredCapabilities);
 
       try {
-        for (const capability of input.requiredCapabilities) {
+        for (const capability of setupOrder) {
           const adapter = capabilityAdapters.get(capability);
           if (adapter === undefined) {
             throw new Error(
@@ -98,6 +100,28 @@ export function createV2Adapter<Context>(
       });
     },
   };
+}
+
+function orderCapabilities(required: RequiredCapabilities): RequiredCapabilities {
+  const permissionIndex = required.indexOf(CAPABILITIES.agentPermissionRules);
+  const registrationIndex = required.indexOf(CAPABILITIES.agentRegistration);
+  if (
+    permissionIndex < 0 ||
+    registrationIndex < 0 ||
+    registrationIndex < permissionIndex
+  ) {
+    return required;
+  }
+
+  const ordered: CapabilityId[] = [...required];
+  ordered.splice(permissionIndex, 1);
+  const nextRegistrationIndex = ordered.indexOf(CAPABILITIES.agentRegistration);
+  ordered.splice(
+    nextRegistrationIndex + 1,
+    0,
+    CAPABILITIES.agentPermissionRules,
+  );
+  return ordered;
 }
 
 async function disposeOwnedCleanups(cleanups: Cleanup[]): Promise<unknown> {

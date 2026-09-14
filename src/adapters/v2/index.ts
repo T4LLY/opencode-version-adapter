@@ -52,10 +52,19 @@ export {
   applyV2AgentDefinition,
   createV2AgentRegistrationCapability,
   toV2AgentModelRef,
+} from "./capabilities/agent-registration";
+
+export {
   type V2AgentContext,
   type V2AgentDomain,
   type V2AgentEditor,
   type V2AgentInfo,
   type V2AgentModelRef,
+  type V2AgentPermissionRule,
   type V2AgentRegistrationHandle,
-} from "./capabilities/agent-registration";
+} from "./agent-domain";
+
+export {
+  createV2AgentPermissionRulesCapability,
+  toV2AgentPermissionRules,
+} from "./capabilities/agent-permission-rules";

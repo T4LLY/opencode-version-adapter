@@ -291,6 +291,15 @@ The initial agent capability MUST support registering the consumer-provided agen
 - **THEN** permission mapping fails before mutating host Agent configuration
 - **AND** the permission capability does not create a placeholder Agent as a side effect
 
+#### Scenario: V2 permission rules preserve native precedence
+
+- **GIVEN** OpenCode v2 Agent state already contains host-owned permission rules
+- **WHEN** the consumer requires both Agent registration and ordered Agent permission mapping
+- **THEN** the v2 adapter installs Agent registration before permission mapping even if the required-capability list names permission mapping first
+- **AND** shared permission groups are flattened into the native ordered ruleset without reordering
+- **AND** consumer rules follow host-owned rules so native last-match evaluation preserves consumer override intent
+- **AND** disposing the permission capability removes only its replayable transform rather than deleting host-owned rules
+
 ### Requirement: Subagent depth expresses a consumer-owned minimum
 
 The shared subagent-depth capability MUST accept a consumer-owned minimum global nesting depth without requiring the consumer to know the active generation's config field or defaulting rules.
