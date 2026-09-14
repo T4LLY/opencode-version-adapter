@@ -34,3 +34,16 @@ export {
   type V2SessionHookRegistration,
   type V2SessionModelIdentityInput,
 } from "./session-model";
+
+export { createV2ToolBeforeExecutionCapability } from "./capabilities/tool-before-execution";
+
+export { createV2SuccessfulToolCompletionCapability } from "./capabilities/successful-tool-completion";
+
+export {
+  type V2ToolExecuteAfterEvent,
+  type V2ToolExecuteBeforeEvent,
+  type V2ToolHookContext,
+  type V2ToolHookDomain,
+  type V2ToolHookRegistration,
+  type V2ToolHooks,
+} from "./tool-execution";
