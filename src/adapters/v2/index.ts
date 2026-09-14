@@ -10,6 +10,12 @@ export {
 export { OPEN_CODE_V2_CAPABILITY_SUPPORT } from "./support";
 
 export {
+  createIntegratedV2Adapter,
+  type V2CapabilityBindings,
+  type V2IntegratedContext,
+} from "./integrated-adapter";
+
+export {
   createV2ServerDefinition,
   createV2ServerLifecycleCapability,
   type V2ServerDefinition,
