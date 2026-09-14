@@ -16,3 +16,9 @@ export {
   VersionAdapterError,
   type AdapterErrorCategory,
 } from "./contract/errors";
+export {
+  type SuccessfulToolCompletion,
+  type SuccessfulToolCompletionInput,
+  type ToolBeforeExecution,
+  type ToolBeforeExecutionInput,
+} from "./contract/tool-execution";

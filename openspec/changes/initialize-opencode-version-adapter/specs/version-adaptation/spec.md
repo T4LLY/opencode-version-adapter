@@ -228,6 +228,13 @@ The initial tool capabilities MUST distinguish notification immediately before t
 - **THEN** it is invoked only after successful host tool completion
 - **AND** a generation whose native after-hook also reports errors MUST NOT surface an error branch as successful completion
 
+#### Scenario: OpenCode v1 Task failure reaches the native after-hook without a result
+
+- **GIVEN** OpenCode v1.18.30 catches a Task execution failure and invokes `tool.execute.after` with an undefined result before recording the tool error
+- **WHEN** the v1 adapter receives that native after-hook call
+- **THEN** it does not invoke the shared successful tool-completion callback
+- **AND** the missing result is not reclassified as successful completion
+
 #### Scenario: One generation exposes active agent on tool completion
 
 - **WHEN** the active OpenCode generation includes an agent identifier in its native tool-completion payload but another supported generation does not
