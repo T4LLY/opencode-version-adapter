@@ -76,6 +76,19 @@ OpenCode v1.18.30's server loader resolves the v1 module shape and invokes `serv
 
 A combined default object containing both v1 and v2 members may be a viable packaging technique because each loader examines a different required member set, but Phase 0 does not make that shape a permanent specification. The actual package export strategy must be proven against both pinned runtimes before it becomes part of the public contract. Consumer business logic must not perform generation selection regardless of the packaging mechanism chosen.
 
+### `opencode-plugin-compat` v1 reuse evaluation
+
+`opencode-plugin-compat` (OCP) was re-evaluated against the implemented OpenCode v1 baseline using its published `0.4.0` source. No OCP production dependency is adopted for the initial v1 adapter.
+
+The evaluated generic surfaces do not replace the semantic mappings required here:
+
+- `packages/adapter/src/index.ts` is primarily a host-profile/facade bridge. Its classic `normalizeHooks()` path reports host gaps and returns the hook object unchanged; it does not split `chat.params` into the two shared capabilities, filter the v1 Task failure-shaped `tool.execute.after`, stage config mutations transactionally, preserve ordered Agent permission intent, merge `subagent_depth`, or sequence irreversible workspace registration.
+- `packages/facade-plugin/src/types.ts` provides portable structural classic-plugin types and explicitly describes them as aligned with `@opencode-ai/plugin@1.18.3`, with intentionally loose SDK entity shapes. Those types are useful compatibility evidence, but they are not a substitute for this package's verified OpenCode `v1.18.30` semantic contract.
+- OCP's workspace types structurally resemble the required v1 workspace surface, but importing OCP only for those types would add a compatibility dependency without removing any semantic adapter responsibility.
+- `@opencode-compat/adapter` itself pulls the profile and Promise-v2 host kit, while `@opencode-compat/facade-plugin` additionally pulls the adapter, facade SDK, Promise-v2 host kit, profile, and Zod. None of those runtime dependencies are required by the current v1 mappings.
+
+The initial v1 adapter therefore keeps its local narrow mappings and adds no OCP dependency. OCP remains a candidate only if a future concrete capability needs its host-profile/facade/provider behavior with matching semantics; such adoption still requires specification-first review rather than dependency-wide API coverage.
+
 ### `oh-my-opencode-slim` reuse classification
 
 The upstream v2 bridge is evidence, not a module to copy wholesale. At `v2.2.19` the inspected files are already responsibility-heavy (`setup.ts` is about 1,249 lines, `client-shim.ts` about 474, `event-adapter.ts` about 410, and `index.ts` about 1,509), so reproducing that layout would violate this package's responsibility guardrails.
