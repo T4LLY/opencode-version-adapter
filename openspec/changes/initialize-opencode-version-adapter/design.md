@@ -104,6 +104,28 @@ Potentially generic mechanisms that may be adapted only when required are:
 
 Application-specific command markers, interview behavior, background-job/orchestrator policy, prompt mutation, model fallback, delegation policy, MCP policy, and other oh-my-opencode-slim behavior remain excluded. Any copied or substantially adapted block must record its exact upstream source path and `27d3658` provenance and retain the MIT notice as required.
 
+### Phase 3 v2 bridge re-review
+
+Before starting the local v2 adapter, `oh-my-opencode-slim` `v2.2.19` / `27d3658` was re-reviewed at `src/v2/setup.ts`, `src/v2/client-shim.ts`, `src/v2/event-adapter.ts`, `src/index.ts`, and `LICENSE`. The repository is MIT licensed.
+
+The local adapter may reuse these generic architectural ideas only when a concrete capability needs them:
+
+- one v2 `setup` boundary that owns registrations and returns one cleanup owner
+- registration handles whose `dispose()` operations are collected by setup
+- one small bridge per host domain rather than consumer-side generation branching
+- explicit structural host-context checks before a domain is used
+
+The following upstream behavior remains application-specific and is not part of the reusable adapter boundary:
+
+- reconstructing a broad v1 `PluginInput` client shim
+- translating the complete v1 hook surface into v2
+- command-marker and interview emulation
+- delegation/tool-name rewriting and background-job policy
+- prompt/cache mutation, model fallback, MCP policy, orchestration, and scheduler behavior
+- consumer-specific event ontology conversion
+
+The Phase 3 composition skeleton is independently implemented from this package's existing shared lifecycle contract and does not copy or substantially adapt upstream source code. Therefore no upstream source block or license notice is embedded in production code at this step. If a later capability substantially adapts an upstream block, that capability module must record the exact source path and `27d3658` provenance and retain the required MIT notice.
+
 ## Goals / Non-Goals
 
 ### Goals
