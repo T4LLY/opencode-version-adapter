@@ -1,4 +1,13 @@
 export {
+  AGENT_MODES,
+  type AgentDefinition,
+  type AgentDefinitions,
+  type AgentMode,
+  type AgentRegistration,
+  type AgentRegistrationContext,
+} from "./contract/agent-registration";
+
+export {
   CAPABILITIES,
   CAPABILITY_SUPPORT,
   assertRequiredCapabilitiesSupported,

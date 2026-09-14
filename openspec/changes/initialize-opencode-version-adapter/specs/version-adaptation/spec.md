@@ -251,6 +251,19 @@ The initial agent capability MUST support registering the consumer-provided agen
 - **THEN** the generation adapter maps those definitions into the active OpenCode registration mechanism
 - **AND** FOA remains responsible for hierarchy compilation, descriptions, prompts, collision decisions, child allowlists, and requested subagent depth
 
+#### Scenario: Registration needs host Agent collision context
+
+- **WHEN** the active generation exposes existing Agent identifiers at registration time
+- **THEN** the adapter exposes those identifiers through generation-independent registration context
+- **AND** the consumer decides whether a matching identifier is rejected, replaced, or otherwise handled
+- **AND** the adapter does not silently invent a collision policy
+
+#### Scenario: Registration and permission mapping remain separate
+
+- **WHEN** a consumer registers an Agent and also supplies ordered permission intent
+- **THEN** the base Agent registration representation contains only non-permission Agent fields
+- **AND** ordered permission conversion remains owned by the separate agent-permission capability
+
 #### Scenario: Ordered child permission rules are mapped
 
 - **WHEN** a consumer supplies ordered permission intent whose behavior depends on later matching rules overriding earlier matching rules
