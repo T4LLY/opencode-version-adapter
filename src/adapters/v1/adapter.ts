@@ -64,6 +64,15 @@ export function createV1Adapter<Context>(
         definition.capabilities,
       );
 
+      const missingCapability = input.requiredCapabilities.find(
+        (capability) => !capabilityAdapters.has(capability),
+      );
+      if (missingCapability !== undefined) {
+        throw new AdapterInitializationError(
+          `OpenCode v1 capability mapping is not installed: ${missingCapability}`,
+        );
+      }
+
       const cleanups: Cleanup[] = [];
       const setupOrder = [
         ...input.requiredCapabilities.filter(

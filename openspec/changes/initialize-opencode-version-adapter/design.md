@@ -80,6 +80,14 @@ OpenCode v1.18.30's server loader resolves the v1 module shape and invokes `serv
 
 A combined default object containing both v1 and v2 members may be a viable packaging technique because each loader examines a different required member set, but Phase 0 does not make that shape a permanent specification. The actual package export strategy must be proven against both pinned runtimes before it becomes part of the public contract. Consumer business logic must not perform generation selection regardless of the packaging mechanism chosen.
 
+### Phase 4 source-level loader integration
+
+Before runtime smoke testing, the pinned loader implementations were re-read to establish one concrete candidate module shape. OpenCode v1.18.30 `readV1Plugin()` reads the default-exported object, selects its `server` function for the server path, and does not reject unrelated extra members. OpenCode v2.0.3 `PluginModule` decodes the default export as a definition with `id` plus `setup` or `effect`; the same `{ id, server, setup }` shape is independently exercised by the inspected `oh-my-opencode-slim` v2.2.19 compatibility package against the v2.0.3 baseline.
+
+The repository therefore contains an internal candidate server-module factory that emits one `{ id, server, setup }` object from generation-independent capability bindings. The consumer does not branch on generation: the v1 loader selects `server`, while the v2 loader selects `id` and `setup`. This candidate remains private until Task 5.1 runs the package through both pinned OpenCode runtimes; source-shaped loader tests are preparation for that runtime proof, not a substitute for it.
+
+The same preparation adds one integrated v1 server composition boundary. It combines the v1 shared native hooks (`chat.params` and `config`) from their independent semantic handlers, keeps Workspace registration as the final irreversible setup step, and preflights missing required mappings before any host mutation. This makes the v1 side symmetrical with the already-integrated v2 adapter without moving consumer policy into the compatibility layer.
+
 ### `opencode-plugin-compat` v1 reuse evaluation
 
 `opencode-plugin-compat` (OCP) was re-evaluated against the implemented OpenCode v1 baseline using its published `0.4.0` source. No OCP production dependency is adopted for the initial v1 adapter.
