@@ -27,6 +27,11 @@ export {
   type RequiredCapabilities,
 } from "./contract/capabilities";
 
+
+export {
+  type SubagentDepthRequirement,
+} from "./contract/subagent-depth";
+
 export {
   ADAPTER_ERROR_CATEGORY,
   AdapterInitializationError,

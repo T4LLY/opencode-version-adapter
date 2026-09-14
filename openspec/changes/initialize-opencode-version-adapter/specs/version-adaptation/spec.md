@@ -276,6 +276,44 @@ The initial agent capability MUST support registering the consumer-provided agen
 - **THEN** permission mapping fails before mutating host Agent configuration
 - **AND** the permission capability does not create a placeholder Agent as a side effect
 
+### Requirement: Subagent depth expresses a consumer-owned minimum
+
+The shared subagent-depth capability MUST accept a consumer-owned minimum global nesting depth without requiring the consumer to know the active generation's config field or defaulting rules.
+
+A generation that claims support MUST preserve a larger valid host-configured depth rather than lowering it. The adapter MUST NOT derive hierarchy depth or implement a separate Task scheduler.
+
+#### Scenario: FOA requires deeper nesting than the v1 host config
+
+- **GIVEN** FOA requires minimum depth `2`
+- **AND** OpenCode v1 config currently has `subagent_depth: 1`
+- **WHEN** the v1 subagent-depth mapping runs
+- **THEN** the host config depth becomes `2`
+
+#### Scenario: OpenCode v1 already allows deeper nesting
+
+- **GIVEN** FOA requires minimum depth `2`
+- **AND** OpenCode v1 config currently has `subagent_depth: 5`
+- **WHEN** the v1 subagent-depth mapping runs
+- **THEN** the host config depth remains `5`
+
+#### Scenario: OpenCode v1 omits the depth field
+
+- **GIVEN** OpenCode v1 config omits `subagent_depth`
+- **AND** FOA requires minimum depth `0`
+- **WHEN** the v1 subagent-depth mapping runs
+- **THEN** the adapter preserves OpenCode v1.18.30's effective default depth of `1`
+
+### Requirement: Shared host config mappings commit atomically
+
+When multiple semantic capabilities share one generation-native mutable config hook, the generation adapter MUST stage their mapped changes and commit them only after every participating mapping succeeds.
+
+#### Scenario: A later v1 config mapping fails
+
+- **GIVEN** Agent registration and subagent-depth mappings have produced staged changes
+- **WHEN** a later v1 config mapping fails before the shared config hook completes
+- **THEN** neither the staged Agent map nor staged subagent depth is committed to the host config
+- **AND** the consumer does not observe a partially installed compatibility plan
+
 ### Requirement: Initial support classifications are evidence-backed
 
 For the Phase 0 OpenCode baselines, the adapter specification records the following support classifications for the approved semantic capabilities. These classifications MUST be revalidated before broader runtime versions are claimed.
