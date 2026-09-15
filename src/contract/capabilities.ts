@@ -41,6 +41,37 @@ export type CapabilitySupportMap = Readonly<
 /** Capabilities whose absence prevents the consumer from activating safely. */
 export type RequiredCapabilities = readonly CapabilityId[];
 
+/**
+ * Normalize capability requirements to their set semantics while preserving
+ * the first occurrence order used by generation-specific setup ordering.
+ */
+export function normalizeRequiredCapabilities(
+  required: RequiredCapabilities,
+): {
+  readonly requiredCapabilities: RequiredCapabilities;
+  readonly duplicateCapabilities: readonly CapabilityId[];
+} {
+  const seen = new Set<CapabilityId>();
+  const duplicateSet = new Set<CapabilityId>();
+  const requiredCapabilities: CapabilityId[] = [];
+  const duplicateCapabilities: CapabilityId[] = [];
+
+  for (const capability of required) {
+    if (!seen.has(capability)) {
+      seen.add(capability);
+      requiredCapabilities.push(capability);
+      continue;
+    }
+
+    if (!duplicateSet.has(capability)) {
+      duplicateSet.add(capability);
+      duplicateCapabilities.push(capability);
+    }
+  }
+
+  return { requiredCapabilities, duplicateCapabilities };
+}
+
 export function assertRequiredCapabilitiesSupported(
   required: RequiredCapabilities,
   support: CapabilitySupportMap,

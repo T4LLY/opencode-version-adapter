@@ -1,11 +1,16 @@
 import {
   CAPABILITIES,
   assertRequiredCapabilitiesSupported,
+  normalizeRequiredCapabilities,
   type CapabilityId,
   type CapabilitySupportMap,
   type RequiredCapabilities,
 } from "../../contract/capabilities";
-import type { DiagnosticReporter } from "../../contract/diagnostics";
+import {
+  ADAPTER_DIAGNOSTIC_SEVERITY,
+  reportDiagnostic,
+  type DiagnosticReporter,
+} from "../../contract/diagnostics";
 import { AdapterInitializationError } from "../../contract/errors";
 import {
   createAdapterHandle,
@@ -61,12 +66,24 @@ export function createV1Adapter<Context>(
     capabilities: definition.capabilities,
 
     async setup(input): Promise<AdapterHandle> {
+      const { requiredCapabilities, duplicateCapabilities } =
+        normalizeRequiredCapabilities(input.requiredCapabilities);
+
+      for (const capability of duplicateCapabilities) {
+        await reportDiagnostic(input.diagnostics, {
+          severity: ADAPTER_DIAGNOSTIC_SEVERITY.warning,
+          code: "duplicate-required-capability",
+          message: `Duplicate required capability ignored: ${capability}`,
+          capability,
+        });
+      }
+
       assertRequiredCapabilitiesSupported(
-        input.requiredCapabilities,
+        requiredCapabilities,
         definition.capabilities,
       );
 
-      const missingCapability = input.requiredCapabilities.find(
+      const missingCapability = requiredCapabilities.find(
         (capability) => !capabilityAdapters.has(capability),
       );
       if (missingCapability !== undefined) {
@@ -77,10 +94,10 @@ export function createV1Adapter<Context>(
 
       const cleanups: Cleanup[] = [];
       const setupOrder = [
-        ...input.requiredCapabilities.filter(
+        ...requiredCapabilities.filter(
           (capability) => capability !== CAPABILITIES.workspaceRegistration,
         ),
-        ...input.requiredCapabilities.filter(
+        ...requiredCapabilities.filter(
           (capability) => capability === CAPABILITIES.workspaceRegistration,
         ),
       ];

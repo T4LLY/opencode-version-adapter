@@ -3,6 +3,7 @@ import {
   CAPABILITY_SUPPORT,
   type CapabilitySupportMap,
 } from "../../src/contract/capabilities";
+import type { AdapterDiagnostic } from "../../src/contract/diagnostics";
 import {
   ADAPTER_ERROR_CATEGORY,
   AdapterInitializationError,
@@ -106,6 +107,54 @@ async function assertCompositionAndDisposal(): Promise<void> {
       cleanupEvents.includes("cleanup:server-lifecycle") &&
       cleanupEvents.includes("cleanup:host-event-delivery"),
     "v1 adapter must own one idempotent cleanup for every acquired resource",
+  );
+}
+
+
+async function assertDuplicateRequirementsAreDeduplicated(): Promise<void> {
+  const context: TestContext = { events: [] };
+  const diagnostics: AdapterDiagnostic[] = [];
+  const adapter = createV1Adapter({
+    capabilities: support,
+    capabilityAdapters: [
+      capabilityAdapter(CAPABILITIES.serverLifecycle),
+      capabilityAdapter(CAPABILITIES.hostEventDelivery),
+    ],
+  });
+
+  const handle = await adapter.setup({
+    context,
+    requiredCapabilities: [
+      CAPABILITIES.serverLifecycle,
+      CAPABILITIES.hostEventDelivery,
+      CAPABILITIES.serverLifecycle,
+      CAPABILITIES.serverLifecycle,
+      CAPABILITIES.hostEventDelivery,
+    ],
+    diagnostics(diagnostic) {
+      diagnostics.push(diagnostic);
+    },
+  });
+
+  assert(
+    context.events.join("|") ===
+      "install:server-lifecycle|install:host-event-delivery",
+    "v1 duplicate requirements must install each capability once in first-occurrence order",
+  );
+  assert(
+    diagnostics.length === 2 &&
+      diagnostics[0]?.code === "duplicate-required-capability" &&
+      diagnostics[0]?.capability === CAPABILITIES.serverLifecycle &&
+      diagnostics[1]?.code === "duplicate-required-capability" &&
+      diagnostics[1]?.capability === CAPABILITIES.hostEventDelivery,
+    "v1 must emit one structured warning per duplicated capability id",
+  );
+
+  await handle.dispose();
+  assert(
+    context.events.join("|") ===
+      "install:server-lifecycle|install:host-event-delivery|cleanup:host-event-delivery|cleanup:server-lifecycle",
+    "v1 duplicate requirements must not create duplicate cleanup ownership",
   );
 }
 
@@ -311,6 +360,7 @@ async function assertWorkspaceRegistrationIsSkippedWhenEarlierSetupFails(): Prom
 
 void (async () => {
   await assertCompositionAndDisposal();
+  await assertDuplicateRequirementsAreDeduplicated();
   await assertPartialSetupRollback();
   await assertUnsupportedPreflight();
   await assertIrreversibleWorkspaceRegistrationCommitsLast();

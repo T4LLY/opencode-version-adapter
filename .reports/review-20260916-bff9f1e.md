@@ -54,7 +54,7 @@ The adapter contract is well-designed: capability preflight runs before irrevers
 
 Reproduced directly against `src/contract/lifecycle.ts`: the first `dispose()` re-threw the synchronous cleanup error while the second resolved because `started` was set before `pending` could be assigned. The handle now caches a synchronous failure separately and rethrows the same value on repeated disposal without changing the successful synchronous or asynchronous cleanup paths. Added a contract regression test that invokes the failing handle twice and requires the same error both times.
 
-### [ ] C4. Duplicate capability ids in `requiredCapabilities` cause double installation
+### [Fixed] C4. Duplicate capability ids in `requiredCapabilities` cause double installation
 
 - **Severity:** Low
 - **Confidence:** High-confidence
@@ -65,6 +65,10 @@ Reproduced directly against `src/contract/lifecycle.ts`: the first `dispose()` r
 - **Impact:** Surprising double side effects for malformed-but-type-valid input.
 - **Trigger:** Pass `requiredCapabilities: [agentRegistration, agentRegistration]`.
 - **Verification:** Either dedupe ids when building setup order or reject duplicates with a contract validation error; add a unit test.
+
+#### Update — 2026-09-16 08:36 — Base 6b29bb3
+
+Verified that both generation adapters previously iterated duplicate `requiredCapabilities` entries through installation. Per the updated OpenSpec set semantics, setup now normalizes requirements to first-occurrence order before support validation and dependency ordering, emits at most one best-effort `duplicate-required-capability` warning per duplicated capability id, and installs/owns each distinct mapping once. Added v1 coverage for repeated ids and balanced cleanup plus v2 coverage proving deduplication occurs before agent-registration/permission dependency ordering. TypeScript 5.8.3 compilation succeeded and all 25 generated test files passed under Node; the OpenSpec CLI is not installed in this environment, so strict OpenSpec validation was not re-run.
 
 ### [Fixed] C5. No documented or discoverable test command; test suite is not runner-compatible
 

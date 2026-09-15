@@ -1,4 +1,5 @@
 import { CAPABILITIES } from "../../src/contract/capabilities";
+import type { AdapterDiagnostic } from "../../src/contract/diagnostics";
 import {
   ADAPTER_ERROR_CATEGORY,
   AdapterInitializationError,
@@ -27,7 +28,9 @@ function capabilityAdapter(
   capability:
     | typeof CAPABILITIES.serverLifecycle
     | typeof CAPABILITIES.hostEventDelivery
-    | typeof CAPABILITIES.toolBeforeExecution,
+    | typeof CAPABILITIES.toolBeforeExecution
+    | typeof CAPABILITIES.agentRegistration
+    | typeof CAPABILITIES.agentPermissionRules,
   options: { fail?: boolean; cleanupFail?: boolean } = {},
 ): V2CapabilityAdapter<TestContext> {
   return {
@@ -85,6 +88,56 @@ async function assertCompositionAndDisposal(): Promise<void> {
     context.events.join("|") ===
       "install:server-lifecycle|install:host-event-delivery|cleanup:host-event-delivery|cleanup:server-lifecycle",
     "v2 disposal must be idempotent and release acquired resources in reverse order",
+  );
+}
+
+
+async function assertDuplicateRequirementsAreDeduplicatedBeforeOrdering(): Promise<void> {
+  const context: TestContext = { events: [] };
+  const diagnostics: AdapterDiagnostic[] = [];
+  const adapter = createV2Adapter({
+    capabilities: support,
+    capabilityAdapters: [
+      capabilityAdapter(CAPABILITIES.agentPermissionRules),
+      capabilityAdapter(CAPABILITIES.agentRegistration),
+    ],
+  });
+
+  const handle = await adapter.setup({
+    context,
+    requiredCapabilities: [
+      CAPABILITIES.agentPermissionRules,
+      CAPABILITIES.agentRegistration,
+      CAPABILITIES.agentPermissionRules,
+      CAPABILITIES.agentRegistration,
+    ],
+    diagnostics(diagnostic) {
+      diagnostics.push(diagnostic);
+    },
+  });
+
+  assert(
+    context.events.join("|") ===
+      "install:agent-registration|install:agent-permission-rules",
+    "v2 must deduplicate requirements before dependency ordering and install each capability once",
+  );
+  assert(
+    diagnostics.length === 2 &&
+      diagnostics[0]?.capability === CAPABILITIES.agentPermissionRules &&
+      diagnostics[1]?.capability === CAPABILITIES.agentRegistration &&
+      diagnostics.every(
+        (diagnostic) =>
+          diagnostic.code === "duplicate-required-capability" &&
+          diagnostic.severity === "warning",
+      ),
+    "v2 must emit one warning for each duplicated capability id",
+  );
+
+  await handle.dispose();
+  assert(
+    context.events.join("|") ===
+      "install:agent-registration|install:agent-permission-rules|cleanup:agent-permission-rules|cleanup:agent-registration",
+    "v2 duplicate requirements must preserve balanced reverse-order cleanup",
   );
 }
 
@@ -205,6 +258,7 @@ async function assertCleanupAttemptsEveryResource(): Promise<void> {
 
 (async () => {
   await assertCompositionAndDisposal();
+  await assertDuplicateRequirementsAreDeduplicatedBeforeOrdering();
   await assertPartialSetupRollback();
   await assertUnsupportedPreflight();
   await assertCleanupAttemptsEveryResource();
