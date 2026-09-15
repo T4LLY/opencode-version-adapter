@@ -94,7 +94,7 @@ Verified that both generation adapters previously iterated duplicate `requiredCa
 
 Added root-level `TESTING.md` documenting the canonical PowerShell verification flow: compile `src/` and `tests/` with TypeScript 5.8.3 into `.tmp-test`, execute every generated `*.test.js` with Node, then run strict OpenSpec validation. The document also records the real-loader smoke command and explicitly warns that `bun test` collects zero tests and direct `node --test` is not the supported path. The equivalent compile-and-run path was executed in this environment with TypeScript 5.8.3 and all 23 generated test files passed under Node; the OpenSpec CLI is not installed here, so strict OpenSpec validation was not re-run. This fixes test-command discoverability without introducing package-manager metadata or choosing a new build system.
 
-### [ ] C6. `toV2ModelRequestIdentity` performs no runtime guard on `input.model`
+### [False positive] C6. `toV2ModelRequestIdentity` performs no runtime guard on `input.model`
 
 - **Severity:** Minor
 - **Confidence:** High-confidence
@@ -106,7 +106,11 @@ Added root-level `TESTING.md` documenting the canonical PowerShell verification 
 - **Trigger:** Host emits `model.request`-shaped event without `model`.
 - **Verification:** Add a guard that either filters the event or raises a typed error; unit test with `model: undefined`.
 
-### [ ] C7. Raw `TypeError` thrown outside the `VersionAdapterError` family in v2 surface validation
+#### Update — 2026-09-16 10:43 — Base 603dcd6
+
+Verified the reported raw `TypeError` path is a malformed host-hook payload case, not a `hostEventDelivery` pump failure: v2 model-request/context hooks are separate from the event-subscription pump covered by C1. The adapter contract does not require re-validating every field of OpenCode's typed hook payload at runtime, and adding an isolated `input.model` guard would duplicate the upstream host schema without establishing a generation-wide validation policy. No production change was made.
+
+### [False positive] C7. Raw `TypeError` thrown outside the `VersionAdapterError` family in v2 surface validation
 
 - **Severity:** Minor (cosmetic/consistency)
 - **Confidence:** High-confidence
@@ -118,7 +122,11 @@ Added root-level `TESTING.md` documenting the canonical PowerShell verification 
 - **Trigger:** Passing invalid id/workspace/model-ref values.
 - **Verification:** Either map these sites to a typed error subclass or document `TypeError` as intentional input-validation behavior.
 
-### [ ] C8. Dead defensive re-check inside adapter install loops
+#### Update — 2026-09-16 10:43 — Base 603dcd6
+
+Re-checked the reported throw sites and error contract. The finding mixes locations/generations (`toV2AgentModelRef` is in the v2 agent-registration capability, while the cited workspace validation is v1), and the public contract does not require caller/input programming errors to derive from `VersionAdapterError`; that family is used for adapter compatibility/initialization failures. No production change was made.
+
+### [Resolved] C8. Dead defensive re-check inside adapter install loops
 
 - **Severity:** Info (noise)
 - **Confidence:** High-confidence
@@ -129,6 +137,10 @@ Added root-level `TESTING.md` documenting the canonical PowerShell verification 
 - **Impact:** None at runtime.
 - **Trigger:** N/A (unreachable).
 - **Verification:** Optional cleanup with a type-level exhaustiveness note; no behavior change.
+
+#### Update — 2026-09-16 10:43 — Base 603dcd6
+
+Verified the inner missing-adapter checks remain unreachable after required-capability preflight has succeeded. They have no runtime impact and retaining the defensive invariant check does not weaken behavior or correctness, so no cleanup-only production change was made.
 
 ### [Fixed] C9. Cross-generation behavioral divergence: gate rejection suppresses observation in v1 but not v2
 
@@ -146,7 +158,7 @@ Added root-level `TESTING.md` documenting the canonical PowerShell verification 
 
 Verified the v1 shared `chat.params` composition invoked the gate before passive observation, so a gate rejection suppressed the attempted identity. OpenSpec now defines observation as recording an attempted session/agent/model identity at the adapter boundary, not successful provider execution. The integrated v1 composition now invokes observation before the blocking gate; a regression test verifies the observer runs once before a rejected gate and that the original gate error is preserved.
 
-### [ ] C10. v1 config hook's shallow-copy draft shares per-agent record values with the host config object
+### [Deferred] C10. v1 config hook's shallow-copy draft shares per-agent record values with the host config object
 
 - **Severity:** Low (fragile invariant, not a live bug)
 - **Confidence:** Plausible
@@ -158,7 +170,11 @@ Verified the v1 shared `chat.params` composition invoked the gate before passive
 - **Trigger:** Any future v1 config handler mutating a nested agent record in the draft.
 - **Verification:** Deep-copy the `agent` record values into the draft (or add an assertion/handler contract note); add a mutation-attempt regression test.
 
-### [ ] C11. v2 permission-rule install-time validation assumes `agent.list()` already reflects transforms registered moments earlier
+#### Update — 2026-09-16 10:43 — Base 603dcd6
+
+Verified the staged v1 config draft shallow-copies the Agent map while retaining existing per-Agent value references. All current handlers replace Agent records rather than mutating those shared nested values, so the reported hazard is not a live defect. A generic deep clone of host-owned `unknown` values would introduce new semantics without a current consumer need; defer until a concrete nested-mutating handler or stronger staging contract requires it.
+
+### [Resolved] C11. v2 permission-rule install-time validation assumes `agent.list()` already reflects transforms registered moments earlier
 
 - **Severity:** Unknown (blocks on runtime verification)
 - **Confidence:** Investigation-lead
@@ -170,7 +186,11 @@ Verified the v1 shared `chat.params` composition invoked the gate before passive
 - **Trigger:** Running the integrated v2 adapter with registration + permission bindings against real opencode v2.0.3.
 - **Verification:** Execute tasks 5.2/5.3 against the real `opencode2` binary; specifically assert `list()` visibility of an agent registered via `transform()` in the same setup phase.
 
-### [ ] C12. Runtime verification (Phase 5) incomplete; smoke harness present but unexercised
+#### Update — 2026-09-16 10:43 — Base 603dcd6
+
+Resolved with real OpenCode v2.0.3 runtime evidence. After correcting the separate Promise `agent.list()` response-envelope boundary, `node tests/runtime/real-loader-smoke.mjs` observed Agent registration, immediate permission-transform replay against that registered Agent, and cleanup restoring the Agent state. The run completed with `v2 2.0.3: agent registration, permission replay, and cleanup observed` and `real loader smoke: PASS`, confirming the transform/list visibility assumption used by this capability.
+
+### [Partially resolved] C12. Runtime verification (Phase 5) incomplete; smoke harness present but unexercised
 
 - **Severity:** Medium (process gap, not a code defect)
 - **Confidence:** Investigation-lead
@@ -181,6 +201,10 @@ Verified the v1 shared `chat.params` composition invoked the gate before passive
 - **Impact:** Unknown residual risk concentrated in host-integration assumptions.
 - **Trigger:** Running the adapter against real host binaries.
 - **Verification:** Complete tasks 5.1–5.3, then re-review C11 and the loader-selection assumptions against observed behavior.
+
+#### Update — 2026-09-16 10:43 — Base 603dcd6
+
+Partially resolved through real-runtime execution. The current smoke harness passes against `opencode` v1.18.30 and `opencode2` v2.0.3, confirming v1 `server` and v2 `setup` loader selection; it also now exercises real v2 Agent registration, permission replay, and cleanup successfully. This closes the loader smoke and the specific v2 capability path that blocked C11, but `tasks.md` Phase 5 remains broader: additional actual-runtime capability coverage where practical and server reference-consumer validation in 5.2/5.3 are not yet fully demonstrated, so this process finding is not marked fully resolved.
 
 ---
 
