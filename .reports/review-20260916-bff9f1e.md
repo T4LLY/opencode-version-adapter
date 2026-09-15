@@ -14,7 +14,7 @@ The adapter contract is well-designed: capability preflight runs before irrevers
 
 ## Findings
 
-### [ ] C1. v2 host-event pump exits silently on first delivery error; all subsequent host events dropped until dispose
+### [Fixed] C1. v2 host-event pump exits silently on first delivery error; all subsequent host events dropped until dispose
 
 - **Severity:** Medium
 - **Confidence:** High-confidence
@@ -25,6 +25,10 @@ The adapter contract is well-designed: capability preflight runs before irrevers
 - **Impact:** Silent loss of all host events after first error; delayed, confusing failure diagnosis.
 - **Trigger:** Consumer `deliver` callback throws once; or host iterator raises. Then any subsequent events are unobserved.
 - **Verification:** Unit-level: create a delivery stream fake whose callback throws on the first event, assert the second event is never delivered and no error is observable before `dispose()`. Decide intended semantics (skip-and-continue, error callback, or immediate disposal) and encode in test.
+
+#### Update — 2026-09-16 08:57 — Base 58cbaa5
+
+Verified the fail-stop path with a throwing consumer callback. The pump now preserves its existing fail-stop and cleanup-error semantics while emitting one immediate `error` diagnostic with code `host-event-delivery-failed` through the optional reporter. V2 setup forwards the reporter to capability mappings, and regression coverage verifies the diagnostic is emitted before disposal, later events remain undelivered, and disposal still surfaces the original failure. TypeScript 5.8.3 compilation succeeded and all 25 generated test files passed under Node; the OpenSpec CLI is not installed in this environment, so strict OpenSpec validation was not re-run.
 
 ### [ ] C2. v2 host-event `dispose()` can hang indefinitely if `deliver()` never settles
 

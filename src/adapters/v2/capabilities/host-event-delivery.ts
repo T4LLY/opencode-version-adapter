@@ -1,4 +1,8 @@
 import { CAPABILITIES } from "../../../contract/capabilities";
+import {
+  ADAPTER_DIAGNOSTIC_SEVERITY,
+  reportDiagnostic,
+} from "../../../contract/diagnostics";
 import { InvalidHostContextError } from "../../../contract/errors";
 import type { HostEventDelivery } from "../../../contract/host-event-delivery";
 import type { V2CapabilityAdapter } from "../adapter";
@@ -21,7 +25,7 @@ export function createV2HostEventDeliveryCapability(
 ): V2CapabilityAdapter<V2HostEventContext> {
   return {
     capability: CAPABILITIES.hostEventDelivery,
-    install(context) {
+    install(context, diagnostics) {
       const event = context.event;
       if (event === undefined || typeof event.subscribe !== "function") {
         throw new InvalidHostContextError(
@@ -53,6 +57,12 @@ export function createV2HostEventDeliveryCapability(
         } catch (error) {
           if (!stopping) {
             deliveryError = error;
+            void reportDiagnostic(diagnostics, {
+              severity: ADAPTER_DIAGNOSTIC_SEVERITY.error,
+              code: "host-event-delivery-failed",
+              message: "OpenCode v2 host event delivery stopped after an event processing failure",
+              capability: CAPABILITIES.hostEventDelivery,
+            });
           }
         }
       })();

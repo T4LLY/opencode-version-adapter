@@ -1,3 +1,5 @@
+import { CAPABILITIES } from "../../src/contract/capabilities";
+import type { AdapterDiagnostic } from "../../src/contract/diagnostics";
 import { ADAPTER_ERROR_CATEGORY, InvalidHostContextError } from "../../src/contract/errors";
 import { createV2HostEventDeliveryCapability } from "../../src/adapters/v2";
 
@@ -82,19 +84,42 @@ async function assertOpaqueEventDeliveryAndCleanup(): Promise<void> {
   assert(stream.returned, "v2 event cleanup must close the acquired iterator when supported");
 }
 
-async function assertDeliveryFailureSurfacesFromOwnedCleanup(): Promise<void> {
+async function assertDeliveryFailureSurfacesImmediatelyAndFromOwnedCleanup(): Promise<void> {
   const stream = new ManualEventStream();
   const failed = await deferred();
   const expected = new Error("consumer delivery failed");
+  const diagnostics: AdapterDiagnostic[] = [];
+  let deliveries = 0;
   const capability = createV2HostEventDeliveryCapability(() => {
+    deliveries += 1;
     failed.resolve();
     throw expected;
   });
 
-  const cleanup = await capability.install({ event: { subscribe: () => stream } });
+  const cleanup = await capability.install(
+    { event: { subscribe: () => stream } },
+    (diagnostic) => {
+      diagnostics.push(diagnostic);
+    },
+  );
   stream.push({ type: "test" });
   await failed.promise;
   await Promise.resolve();
+
+  assert(
+    diagnostics.length === 1 &&
+      diagnostics[0]?.severity === "error" &&
+      diagnostics[0]?.code === "host-event-delivery-failed" &&
+      diagnostics[0]?.capability === CAPABILITIES.hostEventDelivery,
+    "v2 background event delivery failure must emit one immediate error diagnostic",
+  );
+
+  stream.push({ type: "after-failure" });
+  await Promise.resolve();
+  assert(
+    deliveries === 1,
+    "v2 event delivery must remain fail-stop after the first delivery failure",
+  );
 
   let error: unknown;
   try {
@@ -103,7 +128,10 @@ async function assertDeliveryFailureSurfacesFromOwnedCleanup(): Promise<void> {
     error = caught;
   }
 
-  assert(error === expected, "v2 background event delivery failure must not be silently discarded by cleanup ownership");
+  assert(
+    error === expected,
+    "v2 background event delivery failure must remain owned by cleanup after diagnostic reporting",
+  );
 }
 
 async function assertInvalidEventDomainFailsClosed(): Promise<void> {
@@ -121,6 +149,6 @@ async function assertInvalidEventDomainFailsClosed(): Promise<void> {
 
 (async () => {
   await assertOpaqueEventDeliveryAndCleanup();
-  await assertDeliveryFailureSurfacesFromOwnedCleanup();
+  await assertDeliveryFailureSurfacesImmediatelyAndFromOwnedCleanup();
   await assertInvalidEventDomainFailsClosed();
 })();

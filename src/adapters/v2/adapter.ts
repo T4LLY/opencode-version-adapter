@@ -29,7 +29,10 @@ export const OPEN_CODE_V2_GENERATION = "v2" as const;
  */
 export interface V2CapabilityAdapter<Context> {
   readonly capability: CapabilityId;
-  install(context: Context): MaybePromise<Cleanup | void>;
+  install(
+    context: Context,
+    diagnostics?: DiagnosticReporter,
+  ): MaybePromise<Cleanup | void>;
 }
 
 export interface V2AdapterDefinition<Context> {
@@ -103,7 +106,10 @@ export function createV2Adapter<Context>(
             );
           }
 
-          const cleanup = await adapter.install(input.context);
+          const cleanup = await adapter.install(
+            input.context,
+            input.diagnostics,
+          );
           if (cleanup !== undefined) {
             cleanups.push(cleanup);
           }

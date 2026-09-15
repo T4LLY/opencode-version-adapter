@@ -141,6 +141,36 @@ async function assertDuplicateRequirementsAreDeduplicatedBeforeOrdering(): Promi
   );
 }
 
+
+async function assertDiagnosticsAreForwardedToCapabilityMappings(): Promise<void> {
+  const context: TestContext = { events: [] };
+  let forwarded: unknown;
+  const reporter = () => {};
+  const adapter = createV2Adapter({
+    capabilities: support,
+    capabilityAdapters: [
+      {
+        capability: CAPABILITIES.serverLifecycle,
+        install(_context, diagnostics) {
+          forwarded = diagnostics;
+        },
+      },
+    ],
+  });
+
+  const handle = await adapter.setup({
+    context,
+    requiredCapabilities: [CAPABILITIES.serverLifecycle],
+    diagnostics: reporter,
+  });
+
+  assert(
+    forwarded === reporter,
+    "v2 setup must forward the supplied diagnostic reporter to capability mappings",
+  );
+  await handle.dispose();
+}
+
 async function assertPartialSetupRollback(): Promise<void> {
   const context: TestContext = { events: [] };
   const adapter = createV2Adapter({
@@ -259,6 +289,7 @@ async function assertCleanupAttemptsEveryResource(): Promise<void> {
 (async () => {
   await assertCompositionAndDisposal();
   await assertDuplicateRequirementsAreDeduplicatedBeforeOrdering();
+  await assertDiagnosticsAreForwardedToCapabilityMappings();
   await assertPartialSetupRollback();
   await assertUnsupportedPreflight();
   await assertCleanupAttemptsEveryResource();
