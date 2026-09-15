@@ -1,4 +1,5 @@
 import { CAPABILITIES, type RequiredCapabilities } from "../../../contract/capabilities";
+import type { DiagnosticReporter } from "../../../contract/diagnostics";
 import type { Cleanup, MaybePromise } from "../../../contract/lifecycle";
 import type { V2Adapter, V2CapabilityAdapter } from "../adapter";
 
@@ -30,6 +31,7 @@ export function createV2ServerDefinition<Context>(input: {
   readonly id: string;
   readonly adapter: V2Adapter<Context>;
   readonly requiredCapabilities: RequiredCapabilities;
+  readonly diagnostics?: DiagnosticReporter;
 }): V2ServerDefinition<Context> {
   if (typeof input.id !== "string" || input.id.trim() === "") {
     throw new TypeError("OpenCode v2 plugin id must be a non-empty string");
@@ -41,6 +43,7 @@ export function createV2ServerDefinition<Context>(input: {
       const handle = await input.adapter.setup({
         context,
         requiredCapabilities: input.requiredCapabilities,
+        diagnostics: input.diagnostics,
       });
 
       return async () => {

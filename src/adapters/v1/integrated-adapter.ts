@@ -5,6 +5,7 @@ import {
   type CapabilityId,
   type RequiredCapabilities,
 } from "../../contract/capabilities";
+import type { DiagnosticReporter } from "../../contract/diagnostics";
 import type { HostEventDelivery } from "../../contract/host-event-delivery";
 import type {
   ModelRequestGate,
@@ -55,6 +56,10 @@ import {
   type V1ConfigHandler,
   type V1ConfigHook,
 } from "./config";
+import {
+  resolveV1DiagnosticReporter,
+  type V1DiagnosticContext,
+} from "./diagnostics";
 import { OPEN_CODE_V1_CAPABILITY_SUPPORT } from "./support";
 
 /** Consumer-owned semantic handlers for the approved OpenCode v1 capability set. */
@@ -71,7 +76,9 @@ export interface V1CapabilityBindings {
 }
 
 /** Narrow v1 PluginInput subset required by the approved mappings. */
-export interface V1IntegratedContext extends V1WorkspaceRegistrationContext {}
+export interface V1IntegratedContext
+  extends V1WorkspaceRegistrationContext,
+    V1DiagnosticContext {}
 
 /** Narrow v1 Hooks subset emitted by the integrated server mapping. */
 export interface V1IntegratedHooks {
@@ -90,6 +97,7 @@ export type V1IntegratedServerPlugin = (
 export interface V1IntegratedServerOptions {
   readonly requiredCapabilities: RequiredCapabilities;
   readonly bindings: V1CapabilityBindings;
+  readonly diagnostics?: DiagnosticReporter;
 }
 
 /**
@@ -220,6 +228,7 @@ export function createIntegratedV1ServerPlugin(
     const handle = await adapter.setup({
       context,
       requiredCapabilities: options.requiredCapabilities,
+      diagnostics: resolveV1DiagnosticReporter(context, options.diagnostics),
     });
 
     return {

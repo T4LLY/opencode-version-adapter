@@ -28,6 +28,13 @@ export {
   type RequiredCapabilities,
 } from "./contract/capabilities";
 
+export {
+  ADAPTER_DIAGNOSTIC_SEVERITY,
+  type AdapterDiagnostic,
+  type AdapterDiagnosticSeverity,
+  type DiagnosticReporter,
+} from "./contract/diagnostics";
+
 
 export {
   type SubagentDepthRequirement,

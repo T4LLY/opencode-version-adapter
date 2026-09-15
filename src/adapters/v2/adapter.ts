@@ -5,6 +5,7 @@ import {
   type CapabilitySupportMap,
   type RequiredCapabilities,
 } from "../../contract/capabilities";
+import type { DiagnosticReporter } from "../../contract/diagnostics";
 import { AdapterInitializationError } from "../../contract/errors";
 import {
   createAdapterHandle,
@@ -34,6 +35,7 @@ export interface V2AdapterDefinition<Context> {
 export interface V2AdapterSetupInput<Context> {
   readonly context: Context;
   readonly requiredCapabilities: RequiredCapabilities;
+  readonly diagnostics?: DiagnosticReporter;
 }
 
 export interface V2Adapter<Context> {

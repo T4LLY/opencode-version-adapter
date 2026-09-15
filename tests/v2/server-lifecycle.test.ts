@@ -1,4 +1,5 @@
 import { CAPABILITIES, CAPABILITY_SUPPORT, type CapabilitySupportMap } from "../../src/contract/capabilities";
+import type { DiagnosticReporter } from "../../src/contract/diagnostics";
 import { createAdapterHandle } from "../../src/contract/lifecycle";
 import {
   createV2Adapter,
@@ -32,8 +33,13 @@ async function assertServerSetupOwnsAdapterHandle(): Promise<void> {
 
   const wrapped = {
     ...adapter,
-    async setup(input: { context: { value: string }; requiredCapabilities: readonly (typeof CAPABILITIES.serverLifecycle)[] }) {
+    async setup(input: {
+      context: { value: string };
+      requiredCapabilities: readonly (typeof CAPABILITIES.serverLifecycle)[];
+      diagnostics?: DiagnosticReporter;
+    }) {
       events.push(`setup:${input.context.value}`);
+      assert(input.diagnostics === diagnostics, "v2 server boundary must forward the external diagnostic reporter");
       const handle = await adapter.setup(input);
       return createAdapterHandle(async () => {
         events.push("dispose");
@@ -42,10 +48,12 @@ async function assertServerSetupOwnsAdapterHandle(): Promise<void> {
     },
   };
 
+  const diagnostics: DiagnosticReporter = () => {};
   const definition = createV2ServerDefinition({
     id: "version-adapter-test",
     adapter: wrapped,
     requiredCapabilities: [CAPABILITIES.serverLifecycle],
+    diagnostics,
   });
 
   assert(definition.id === "version-adapter-test", "v2 definition must preserve plugin id");

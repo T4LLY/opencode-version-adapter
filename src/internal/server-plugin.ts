@@ -1,6 +1,7 @@
 import type { AgentPermissionRulesProvider } from "../contract/agent-permission";
 import type { AgentRegistration } from "../contract/agent-registration";
 import type { RequiredCapabilities } from "../contract/capabilities";
+import type { DiagnosticReporter } from "../contract/diagnostics";
 import type { HostEventDelivery } from "../contract/host-event-delivery";
 import type { Cleanup, MaybePromise } from "../contract/lifecycle";
 import type {
@@ -42,6 +43,7 @@ export interface OpenCodeServerPluginOptions {
   readonly id: string;
   readonly requiredCapabilities: RequiredCapabilities;
   readonly bindings: OpenCodeServerBindings;
+  readonly diagnostics?: DiagnosticReporter;
 }
 
 /**
@@ -63,10 +65,12 @@ export function createOpenCodeServerPlugin(
   const server = createIntegratedV1ServerPlugin({
     requiredCapabilities: options.requiredCapabilities,
     bindings: options.bindings,
+    diagnostics: options.diagnostics,
   });
   const v2 = createV2ServerDefinition<V2IntegratedContext>({
     id: options.id,
     requiredCapabilities: options.requiredCapabilities,
+    diagnostics: options.diagnostics,
     adapter: createIntegratedV2Adapter({
       hostEventDelivery: options.bindings.hostEventDelivery,
       modelRequestGate: options.bindings.modelRequestGate,
