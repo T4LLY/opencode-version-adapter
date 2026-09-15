@@ -18,6 +18,8 @@ const MARKER_ENV = "OPENCODE_VERSION_ADAPTER_SMOKE_MARKER";
 const TIMEOUT_MS = 60_000;
 const POLL_INTERVAL_MS = 50;
 const OUTPUT_LIMIT = 256 * 1024;
+const V2_CAPABILITY_SURFACE = "v2-agent-capabilities";
+const V2_PROBE_ERROR_PREFIX = "v2-agent-capabilities-error:";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../..");
@@ -258,11 +260,23 @@ async function waitForReadyUrl(runtime, args, running) {
   throw timeoutError(runtime.command, args, output);
 }
 
+function assertNoProbeFailure(runtime, surfaces) {
+  const failure = surfaces.find((surface) =>
+    surface.startsWith(V2_PROBE_ERROR_PREFIX),
+  );
+  if (failure === undefined) return;
+
+  throw new Error(
+    `${runtime.label}: v2 capability probe failed: ${failure.slice(V2_PROBE_ERROR_PREFIX.length)}`,
+  );
+}
+
 async function waitForSurface(runtime, marker, running) {
   const deadline = Date.now() + TIMEOUT_MS;
 
   while (Date.now() < deadline) {
     const surfaces = await readSurfaces(marker);
+    assertNoProbeFailure(runtime, surfaces);
     if (surfaces.includes(runtime.expectedSurface)) return;
 
     const completed = await Promise.race([
@@ -272,6 +286,7 @@ async function waitForSurface(runtime, marker, running) {
 
     if (completed.completed) {
       const surfacesAfterExit = await readSurfaces(marker);
+      assertNoProbeFailure(runtime, surfacesAfterExit);
       if (surfacesAfterExit.includes(runtime.expectedSurface)) return;
       throw new Error(
         [
@@ -344,32 +359,166 @@ if (!marker) {
   throw new Error("${MARKER_ENV} is required");
 }
 
+const PROBE_AGENT_ID = "opencode-version-adapter-runtime-probe";
+const PROBE_DESCRIPTION = "opencode-version-adapter runtime probe";
+const PROBE_PERMISSION_ACTION = "opencode-version-adapter.runtime-probe";
+const PROBE_PERMISSION_RESOURCE = "runtime-probe";
+const PROBE_ERROR_PREFIX = ${JSON.stringify(V2_PROBE_ERROR_PREFIX)};
+
 async function record(surface) {
   await appendFile(marker, surface + "\\n", "utf8");
 }
 
-const candidate = createOpenCodeServerPlugin({
+function fail(message) {
+  throw new Error(message);
+}
+
+function formatProbeError(error, seen = new Set(), depth = 0) {
+  if (depth >= 8) return "<cause-depth-limit>";
+  if (error === null || typeof error !== "object") return String(error);
+  if (seen.has(error)) return "<circular-cause>";
+  seen.add(error);
+
+  if (error instanceof Error) {
+    const category =
+      typeof error.category === "string" ? "[" + error.category + "]" : "";
+    const head = error.name + category + ": " + error.message;
+    if (!("cause" in error) || error.cause === undefined) return head;
+    return head + " <- " + formatProbeError(error.cause, seen, depth + 1);
+  }
+
+  if ("setupError" in error || "rollbackError" in error) {
+    const parts = [];
+    if ("setupError" in error) {
+      parts.push(
+        "setup=" + formatProbeError(error.setupError, seen, depth + 1),
+      );
+    }
+    if ("rollbackError" in error) {
+      parts.push(
+        "rollback=" + formatProbeError(error.rollbackError, seen, depth + 1),
+      );
+    }
+    return "{" + parts.join(", ") + "}";
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return Object.prototype.toString.call(error);
+  }
+}
+
+const loaderCandidate = createOpenCodeServerPlugin({
   id: "opencode-version-adapter-real-loader-smoke",
   requiredCapabilities: [CAPABILITIES.serverLifecycle],
   bindings: {},
 });
 
+const v2CapabilityCandidate = createOpenCodeServerPlugin({
+  id: "opencode-version-adapter-v2-capability-probe",
+  requiredCapabilities: [
+    CAPABILITIES.agentPermissionRules,
+    CAPABILITIES.agentRegistration,
+  ],
+  bindings: {
+    agentRegistration({ existingAgentIDs }) {
+      if (existingAgentIDs.includes(PROBE_AGENT_ID)) {
+        fail("probe Agent already exists before registration");
+      }
+
+      return {
+        [PROBE_AGENT_ID]: {
+          description: PROBE_DESCRIPTION,
+          mode: "subagent",
+          hidden: true,
+        },
+      };
+    },
+    agentPermissionRules() {
+      return {
+        [PROBE_AGENT_ID]: [
+          {
+            permission: PROBE_PERMISSION_ACTION,
+            rules: [
+              {
+                pattern: PROBE_PERMISSION_RESOURCE,
+                action: "deny",
+              },
+            ],
+          },
+        ],
+      };
+    },
+  },
+});
+
+function assertInstalled(agents) {
+  const probe = agents.find((agent) => agent.id === PROBE_AGENT_ID);
+  if (probe === undefined) fail("registered probe Agent is not visible from agent.list()");
+  if (probe.description !== PROBE_DESCRIPTION) fail("probe Agent description was not applied");
+  if (probe.mode !== "subagent") fail("probe Agent mode was not applied");
+  if (probe.hidden !== true) fail("probe Agent hidden flag was not applied");
+
+  const permission = probe.permissions.find(
+    (rule) =>
+      rule.action === PROBE_PERMISSION_ACTION &&
+      rule.resource === PROBE_PERMISSION_RESOURCE &&
+      rule.effect === "deny",
+  );
+  if (permission === undefined) fail("probe Agent permission rule was not applied");
+}
+
+function assertDisposed(agents) {
+  if (agents.some((agent) => agent.id === PROBE_AGENT_ID)) {
+    fail("probe Agent remains visible after adapter cleanup");
+  }
+}
+
 export default {
-  id: candidate.id,
+  id: v2CapabilityCandidate.id,
   async server(input) {
-    const hooks = await candidate.server(input);
+    const hooks = await loaderCandidate.server(input);
     await record("server");
     return hooks;
   },
   async setup(context) {
-    const cleanup = await candidate.setup(context);
-    await record("setup");
-    return cleanup;
+    let cleanup;
+    let disposed = false;
+    let stage = "adapter setup";
+    try {
+      cleanup = await v2CapabilityCandidate.setup(context);
+
+      stage = "installed-state assertion";
+      assertInstalled(await context.agent.list());
+
+      stage = "adapter cleanup";
+      if (cleanup !== undefined) {
+        await cleanup();
+        disposed = true;
+      }
+
+      stage = "disposed-state assertion";
+      assertDisposed(await context.agent.list());
+
+      await record(${JSON.stringify(V2_CAPABILITY_SURFACE)});
+      await record("setup");
+    } catch (error) {
+      if (!disposed && cleanup !== undefined) {
+        try {
+          await cleanup();
+        } catch {
+          // Preserve the original probe failure; cleanup behavior is asserted separately.
+        }
+      }
+      const message = stage + ": " + formatProbeError(error);
+      await record(PROBE_ERROR_PREFIX + message.replace(/[\\r\\n]+/gu, " "));
+      throw error;
+    }
   },
 };
 `;
 }
-
 async function readSurfaces(marker) {
   const content = await readFile(marker, "utf8").catch((error) => {
     if (error?.code === "ENOENT") return "";
@@ -450,9 +599,22 @@ async function runRuntimeSmoke(runtime, pluginSource) {
       await runV2Smoke(runtime, workspace, marker, env);
     }
 
+    const surfaces = await readSurfaces(marker);
+    assertNoProbeFailure(runtime, surfaces);
+    if (runtime.label === "v2" && !surfaces.includes(V2_CAPABILITY_SURFACE)) {
+      throw new Error(
+        `${runtime.label}: capability probe did not complete; observed ${surfaces.join(", ") || "nothing"}`,
+      );
+    }
+
     console.log(
       `${runtime.label} ${runtime.expectedVersion}: ${runtime.expectedSurface} observed`,
     );
+    if (runtime.label === "v2") {
+      console.log(
+        `${runtime.label} ${runtime.expectedVersion}: agent registration, permission replay, and cleanup observed`,
+      );
+    }
   } finally {
     await rm(root, { recursive: true, force: true }).catch(() => {});
   }
