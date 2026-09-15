@@ -277,12 +277,22 @@ The adapter MUST provide generation-independent ownership and delivery of host e
 
 For OpenCode v2, a failure from the subscribed event iterator or from the consumer delivery callback MUST stop that owned delivery pump. The original failure MUST remain owned by the delivery cleanup so disposal can surface it. When a diagnostic reporter is available, the adapter MUST also emit exactly one `error` diagnostic with stable code `host-event-delivery-failed` when the pump stops for that failure. Diagnostic reporting MUST NOT cause delivery to resume, replace the original failure, or change cleanup semantics.
 
+Each host-event delivery invocation MUST receive an `AbortSignal` representing adapter cancellation of that in-flight delivery. For the OpenCode v2 owned delivery pump, disposal MUST abort that signal before waiting for pump completion and MUST NOT remain blocked solely on a consumer delivery promise after cancellation has been requested. A consumer SHOULD stop its in-flight work promptly when the signal is aborted; arbitrary consumer code cannot be forcibly terminated by the adapter. Cancellation initiated by normal disposal MUST NOT be reported as `host-event-delivery-failed`. OpenCode v1 has no adapter-owned event pump to cancel, so its host-owned event hook supplies a signal that remains non-aborted for the invocation.
+
 #### Scenario: OpenCode v2 host-event delivery fails after setup
 
 - **WHEN** the v2 event iterator or consumer delivery callback fails while the owned delivery pump is active
 - **THEN** the pump stops and no later host events are delivered by that registration
 - **AND** an available diagnostic reporter receives one `error` diagnostic with code `host-event-delivery-failed` identifying the host-event-delivery capability
 - **AND** the original failure is still surfaced by owned cleanup
+
+#### Scenario: OpenCode v2 is disposed while consumer delivery is still pending
+
+- **WHEN** disposal begins while one host-event delivery callback is still pending
+- **THEN** the callback's cancellation signal is aborted
+- **AND** adapter cleanup does not wait indefinitely for that delivery promise to settle after cancellation
+- **AND** the event iterator is still closed when its native `return()` operation is available
+- **AND** normal disposal cancellation does not emit `host-event-delivery-failed`
 
 #### Scenario: Feed consumes OpenCode events
 

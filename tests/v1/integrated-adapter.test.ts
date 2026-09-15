@@ -26,7 +26,8 @@ async function assertAllV1MappingsComposeBehindOneServer(): Promise<void> {
   const plugin = createIntegratedV1ServerPlugin({
     requiredCapabilities: allV1Capabilities,
     bindings: {
-      hostEventDelivery: () => {
+      hostEventDelivery: (_event, { signal }) => {
+        assert(!signal.aborted, "v1 host-owned event delivery signal must remain active");
         events.push("event");
       },
       modelRequestGate: () => {

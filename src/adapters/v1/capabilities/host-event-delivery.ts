@@ -1,5 +1,7 @@
 import type { HostEventDelivery } from "../../../contract/host-event-delivery";
 
+const HOST_OWNED_EVENT_SIGNAL = new AbortController().signal;
+
 /** Narrow structural shape of the OpenCode v1 `event` hook input. */
 export interface V1EventHookInput {
   readonly event: unknown;
@@ -16,6 +18,6 @@ export function createV1HostEventHook(
   deliver: HostEventDelivery,
 ): V1EventHook {
   return async ({ event }) => {
-    await deliver(event);
+    await deliver(event, { signal: HOST_OWNED_EVENT_SIGNAL });
   };
 }

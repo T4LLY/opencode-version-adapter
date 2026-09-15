@@ -42,6 +42,14 @@ export function createV2HostEventDeliveryCapability(
       }
 
       const iterator = iteratorFactory.call(stream);
+      const deliveryController = new AbortController();
+      const deliveryAborted = new Promise<"aborted">((resolve) => {
+        deliveryController.signal.addEventListener(
+          "abort",
+          () => resolve("aborted"),
+          { once: true },
+        );
+      });
       let stopping = false;
       let deliveryError: unknown;
 
@@ -52,7 +60,17 @@ export function createV2HostEventDeliveryCapability(
             if (next.done) {
               return;
             }
-            await deliver(next.value);
+
+            const delivery = deliver(next.value, {
+              signal: deliveryController.signal,
+            });
+            const outcome = await Promise.race([
+              Promise.resolve(delivery).then(() => "delivered" as const),
+              deliveryAborted,
+            ]);
+            if (outcome === "aborted") {
+              return;
+            }
           }
         } catch (error) {
           if (!stopping) {
@@ -69,6 +87,7 @@ export function createV2HostEventDeliveryCapability(
 
       return async () => {
         stopping = true;
+        deliveryController.abort();
         let returnError: unknown;
 
         if (typeof iterator.return === "function") {

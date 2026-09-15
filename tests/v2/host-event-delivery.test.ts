@@ -134,6 +134,54 @@ async function assertDeliveryFailureSurfacesImmediatelyAndFromOwnedCleanup(): Pr
   );
 }
 
+async function assertDisposeCancelsPendingDeliveryWithoutWaitingForSettlement(): Promise<void> {
+  const stream = new ManualEventStream();
+  const started = await deferred();
+  const diagnostics: AdapterDiagnostic[] = [];
+  let deliverySignal: AbortSignal | undefined;
+
+  const capability = createV2HostEventDeliveryCapability((_event, context) => {
+    deliverySignal = context.signal;
+    started.resolve();
+    return new Promise<void>(() => {});
+  });
+
+  const cleanup = await capability.install(
+    { event: { subscribe: () => stream } },
+    (diagnostic) => {
+      diagnostics.push(diagnostic);
+    },
+  );
+
+  stream.push({ type: "pending" });
+  await started.promise;
+
+  const disposed = Promise.resolve(cleanup?.()).then(() => "disposed" as const);
+  const outcome = await Promise.race([
+    disposed,
+    new Promise<"timeout">((resolve) => {
+      setTimeout(() => resolve("timeout"), 100);
+    }),
+  ]);
+
+  assert(
+    outcome === "disposed",
+    "v2 event cleanup must not wait indefinitely for a pending consumer delivery",
+  );
+  assert(
+    deliverySignal?.aborted === true,
+    "v2 event cleanup must abort the in-flight delivery signal before completing",
+  );
+  assert(
+    stream.returned,
+    "v2 event cleanup must still close the acquired iterator during cancellation",
+  );
+  assert(
+    diagnostics.length === 0,
+    "normal v2 disposal cancellation must not report a delivery failure",
+  );
+}
+
 async function assertInvalidEventDomainFailsClosed(): Promise<void> {
   const capability = createV2HostEventDeliveryCapability(() => {});
   let error: unknown;
@@ -150,5 +198,6 @@ async function assertInvalidEventDomainFailsClosed(): Promise<void> {
 (async () => {
   await assertOpaqueEventDeliveryAndCleanup();
   await assertDeliveryFailureSurfacesImmediatelyAndFromOwnedCleanup();
+  await assertDisposeCancelsPendingDeliveryWithoutWaitingForSettlement();
   await assertInvalidEventDomainFailsClosed();
 })();

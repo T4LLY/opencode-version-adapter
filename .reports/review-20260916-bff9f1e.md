@@ -30,7 +30,7 @@ The adapter contract is well-designed: capability preflight runs before irrevers
 
 Verified the fail-stop path with a throwing consumer callback. The pump now preserves its existing fail-stop and cleanup-error semantics while emitting one immediate `error` diagnostic with code `host-event-delivery-failed` through the optional reporter. V2 setup forwards the reporter to capability mappings, and regression coverage verifies the diagnostic is emitted before disposal, later events remain undelivered, and disposal still surfaces the original failure. TypeScript 5.8.3 compilation succeeded and all 25 generated test files passed under Node; the OpenSpec CLI is not installed in this environment, so strict OpenSpec validation was not re-run.
 
-### [ ] C2. v2 host-event `dispose()` can hang indefinitely if `deliver()` never settles
+### [Fixed] C2. v2 host-event `dispose()` can hang indefinitely if `deliver()` never settles
 
 - **Severity:** Low
 - **Confidence:** High-confidence
@@ -41,6 +41,10 @@ Verified the fail-stop path with a throwing consumer callback. The pump now pres
 - **Impact:** Adapter teardown deadlock when a consumer callback stalls.
 - **Trigger:** `dispose()` called while `deliver()` has a pending, never-settling promise in flight.
 - **Verification:** Unit test with a deliver callback returning a never-settling promise on the final in-flight event; assert dispose either completes (with timeout race) or document the hang as accepted semantics.
+
+#### Update — 2026-09-16 09:08 — Base ba609b7
+
+Verified with a v2 delivery callback that returns a never-settling promise. Host-event delivery now receives an `AbortSignal`; v2 disposal aborts that signal and races the owned pump against cancellation so cleanup no longer remains blocked solely on the consumer promise, while still closing the native iterator. Normal disposal cancellation does not emit the C1 delivery-failure diagnostic. V1 supplies the same shared callback contract with a non-aborted signal because its event hook has no adapter-owned pump. TypeScript 5.8.3 compilation succeeded and all 25 generated test files passed under Node; the OpenSpec CLI is not installed in this environment, so strict OpenSpec validation was not re-run.
 
 ### [Fixed] C3. `createAdapterHandle` swallows synchronous cleanup failures on repeated dispose
 
