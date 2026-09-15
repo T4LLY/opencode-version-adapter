@@ -373,6 +373,37 @@ function fail(message) {
   throw new Error(message);
 }
 
+function summarizeAgentListResult(value) {
+  if (Array.isArray(value)) {
+    return "type=array isArray=true length=" + String(value.length);
+  }
+
+  if (value === null) {
+    return "type=null isArray=false";
+  }
+
+  const type = typeof value;
+  if (type !== "object") {
+    return "type=" + type + " isArray=false";
+  }
+
+  const keys = Object.keys(value).sort();
+  const data = "data" in value ? value.data : undefined;
+  const dataType = data === null ? "null" : typeof data;
+  const dataIsArray = Array.isArray(data);
+  const dataLength = dataIsArray ? data.length : undefined;
+  return [
+    "type=object",
+    "isArray=false",
+    "keys=" + (keys.join(",") || "<none>"),
+    "dataType=" + dataType,
+    "dataIsArray=" + String(dataIsArray),
+    dataLength === undefined ? undefined : "dataLength=" + String(dataLength),
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 function formatProbeError(error, seen = new Set(), depth = 0) {
   if (depth >= 8) return "<cause-depth-limit>";
   if (error === null || typeof error !== "object") return String(error);
@@ -485,8 +516,12 @@ export default {
   async setup(context) {
     let cleanup;
     let disposed = false;
-    let stage = "adapter setup";
+    let agentListShape = "not-observed";
+    let stage = "agent.list shape probe";
     try {
+      agentListShape = summarizeAgentListResult(await context.agent.list());
+
+      stage = "adapter setup";
       cleanup = await v2CapabilityCandidate.setup(context);
 
       stage = "installed-state assertion";
@@ -511,7 +546,12 @@ export default {
           // Preserve the original probe failure; cleanup behavior is asserted separately.
         }
       }
-      const message = stage + ": " + formatProbeError(error);
+      const message =
+        stage +
+        ": " +
+        formatProbeError(error) +
+        " | agent.list=" +
+        agentListShape;
       await record(PROBE_ERROR_PREFIX + message.replace(/[\\r\\n]+/gu, " "));
       throw error;
     }
