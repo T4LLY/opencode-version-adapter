@@ -6,6 +6,8 @@ This package is primarily maintained for personal use.
 
 It currently focuses on normalizing selected OpenCode v1 and v2 behaviors so consumers do not need to depend directly on generation-specific APIs.
 
+This project is not built by the OpenCode team and is not affiliated with OpenCode.
+
 ## Install
 
 npm install opencode-version-adapter
