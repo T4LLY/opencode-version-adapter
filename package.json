@@ -1,5 +1,5 @@
 {
-  "name": "opencode-version-adapter",
+  "name": "@t4lly/opencode-version-adapter",
   "version": "0.1.0",
   "description": "Capability-driven compatibility boundary for OpenCode plugin API generations.",
   "type": "module",

@@ -10,7 +10,7 @@ This project is not built by the OpenCode team and is not affiliated with OpenCo
 
 ## Install
 
-npm install opencode-version-adapter
+npm install @t4lly/opencode-version-adapter
 
 ## Usage
 
