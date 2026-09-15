@@ -24,17 +24,26 @@ export interface AdapterHandle {
 export function createAdapterHandle(cleanup: Cleanup): AdapterHandle {
   let started = false;
   let pending: Promise<void> | undefined;
+  let synchronousFailure: { readonly error: unknown } | undefined;
 
   return {
     dispose(): MaybePromise<void> {
       if (started) {
+        if (synchronousFailure !== undefined) {
+          throw synchronousFailure.error;
+        }
         return pending;
       }
 
       started = true;
-      const result = cleanup();
-      if (result !== undefined) {
-        pending = result;
+      try {
+        const result = cleanup();
+        if (result !== undefined) {
+          pending = result;
+        }
+      } catch (error) {
+        synchronousFailure = { error };
+        throw error;
       }
 
       return pending;

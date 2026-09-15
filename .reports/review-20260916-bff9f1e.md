@@ -38,7 +38,7 @@ The adapter contract is well-designed: capability preflight runs before irrevers
 - **Trigger:** `dispose()` called while `deliver()` has a pending, never-settling promise in flight.
 - **Verification:** Unit test with a deliver callback returning a never-settling promise on the final in-flight event; assert dispose either completes (with timeout race) or document the hang as accepted semantics.
 
-### [ ] C3. `createAdapterHandle` swallows synchronous cleanup failures on repeated dispose
+### [Fixed] C3. `createAdapterHandle` swallows synchronous cleanup failures on repeated dispose
 
 - **Severity:** Low
 - **Confidence:** High-confidence
@@ -49,6 +49,10 @@ The adapter contract is well-designed: capability preflight runs before irrevers
 - **Impact:** Direct consumers of `createAdapterHandle` (outside the built-in adapters) can silently lose cleanup failures.
 - **Trigger:** Call `dispose()` twice where the underlying cleanup throws synchronously on the first call.
 - **Verification:** Unit test against the contract helper with a sync-throwing cleanup; assert second `dispose()` rejects identically (after fix) or document current behavior.
+
+#### Update — 2026-09-16 07:42 — Base bff9f1e
+
+Reproduced directly against `src/contract/lifecycle.ts`: the first `dispose()` re-threw the synchronous cleanup error while the second resolved because `started` was set before `pending` could be assigned. The handle now caches a synchronous failure separately and rethrows the same value on repeated disposal without changing the successful synchronous or asynchronous cleanup paths. Added a contract regression test that invokes the failing handle twice and requires the same error both times.
 
 ### [ ] C4. Duplicate capability ids in `requiredCapabilities` cause double installation
 

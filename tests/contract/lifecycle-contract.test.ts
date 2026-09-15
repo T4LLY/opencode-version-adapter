@@ -37,4 +37,29 @@ class SyntheticLifecycleTarget implements LifecycleConformanceTarget {
   }
 }
 
-void runLifecycleConformanceSuite(() => new SyntheticLifecycleTarget());
+async function assertSynchronousCleanupFailureIsStable(): Promise<void> {
+  const failure = new Error("synthetic synchronous cleanup failure");
+  const handle = createAdapterHandle(() => {
+    throw failure;
+  });
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    let caught: unknown;
+    try {
+      await handle.dispose();
+    } catch (error) {
+      caught = error;
+    }
+
+    if (caught !== failure) {
+      throw new Error(
+        "repeated disposal must preserve a synchronous cleanup failure",
+      );
+    }
+  }
+}
+
+void (async () => {
+  await runLifecycleConformanceSuite(() => new SyntheticLifecycleTarget());
+  await assertSynchronousCleanupFailureIsStable();
+})();
