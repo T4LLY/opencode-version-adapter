@@ -11,6 +11,7 @@ import type {
   V2AgentInfo,
   V2AgentModelRef,
 } from "../agent-domain";
+import { unwrapV2AgentListResult } from "../agent-list";
 
 interface V2AgentPlan {
   readonly id: string;
@@ -110,7 +111,7 @@ export function createV2AgentRegistrationCapability(
         );
       }
 
-      const existing = await agent.list();
+      const existing = unwrapV2AgentListResult(await agent.list());
       const existingAgentIDs = Object.freeze(existing.map((item) => item.id));
       const definitions = await register({ existingAgentIDs });
       const plans = Object.entries(definitions).map(([id, definition]) =>

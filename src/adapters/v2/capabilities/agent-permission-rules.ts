@@ -10,6 +10,7 @@ import type {
   V2AgentContext,
   V2AgentPermissionRule,
 } from "../agent-domain";
+import { unwrapV2AgentListResult } from "../agent-list";
 
 function toV2PermissionGroup(
   group: AgentPermissionRuleGroup,
@@ -75,7 +76,9 @@ export function createV2AgentPermissionRulesCapability(
       // Validate against the state produced by transforms already installed by
       // the host and by agent-registration. This must happen before installing
       // the permission transform so a missing target cannot create an Agent.
-      const existing = new Set((await agent.list()).map((item) => item.id));
+      const existing = new Set(
+        unwrapV2AgentListResult(await agent.list()).map((item) => item.id),
+      );
       for (const plan of mapped) {
         if (!existing.has(plan.agentID)) {
           throw new InvalidHostContextError(

@@ -5,6 +5,7 @@ import {
 import {
   applyV2AgentDefinition,
   createV2AgentRegistrationCapability,
+  unwrapV2AgentListResult,
   toV2AgentModelRef,
   type V2AgentEditor,
   type V2AgentInfo,
@@ -17,6 +18,13 @@ function assert(condition: unknown, message: string): asserts condition {
 
 function assertJSONEqual(actual: unknown, expected: unknown, message: string): void {
   assert(JSON.stringify(actual) === JSON.stringify(expected), message);
+}
+
+function v2AgentListLocation() {
+  return {
+    directory: "C:/repo",
+    project: { id: "project", directory: "C:/repo", canonical: "C:/repo" },
+  };
 }
 
 function defaultAgent(id: string): V2AgentInfo {
@@ -38,8 +46,11 @@ class FakeAgentDomain {
     for (const id of ids) this.agents.set(id, defaultAgent(id));
   }
 
-  async list(): Promise<readonly V2AgentInfo[]> {
-    return [...this.agents.values()];
+  async list() {
+    return {
+      location: v2AgentListLocation(),
+      data: [...this.agents.values()],
+    };
   }
 
   async transform(update: (editor: V2AgentEditor) => void) {
@@ -197,6 +208,24 @@ async function assertInvalidModelFailsBeforeTransform(): Promise<void> {
   assert(domain.transformCalls === 0, "invalid model ref must fail before host mutation");
 }
 
+
+function assertInvalidListEnvelopeFailsClosed(): void {
+  let error: unknown;
+  try {
+    unwrapV2AgentListResult({
+      location: v2AgentListLocation(),
+      data: undefined as never,
+    });
+  } catch (caught) {
+    error = caught;
+  }
+
+  assert(
+    error instanceof InvalidHostContextError,
+    "malformed v2 AgentListOutput must fail as invalid host context",
+  );
+}
+
 async function assertMissingDomainFailsClosed(): Promise<void> {
   const capability = createV2AgentRegistrationCapability(() => ({}));
   let error: unknown;
@@ -215,5 +244,6 @@ void (async () => {
   assertStableV2FieldMapping();
   await assertExistingAgentsAndAsyncPlanning();
   await assertInvalidModelFailsBeforeTransform();
+  assertInvalidListEnvelopeFailsClosed();
   await assertMissingDomainFailsClosed();
 })();

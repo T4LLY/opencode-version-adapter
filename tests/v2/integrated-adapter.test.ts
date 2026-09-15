@@ -69,13 +69,23 @@ class FakeToolDomain {
   }
 }
 
+function v2AgentListLocation() {
+  return {
+    directory: "C:/repo",
+    project: { id: "project", directory: "C:/repo", canonical: "C:/repo" },
+  };
+}
+
 class FakeAgentDomain {
   readonly agents = new Map<string, V2AgentInfo>();
   readonly transforms: Array<(editor: V2AgentEditor) => void> = [];
   disposeCalls = 0;
 
-  async list(): Promise<readonly V2AgentInfo[]> {
-    return [...this.agents.values()];
+  async list() {
+    return {
+      location: v2AgentListLocation(),
+      data: [...this.agents.values()],
+    };
   }
 
   async transform(update: (editor: V2AgentEditor) => void) {

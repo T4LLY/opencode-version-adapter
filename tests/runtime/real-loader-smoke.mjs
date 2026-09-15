@@ -484,6 +484,13 @@ const v2CapabilityCandidate = createOpenCodeServerPlugin({
   },
 });
 
+function agentListData(result) {
+  if (result === null || typeof result !== "object" || !Array.isArray(result.data)) {
+    fail("agent.list() did not return the expected { data: Agent[] } envelope");
+  }
+  return result.data;
+}
+
 function assertInstalled(agents) {
   const probe = agents.find((agent) => agent.id === PROBE_AGENT_ID);
   if (probe === undefined) fail("registered probe Agent is not visible from agent.list()");
@@ -525,7 +532,7 @@ export default {
       cleanup = await v2CapabilityCandidate.setup(context);
 
       stage = "installed-state assertion";
-      assertInstalled(await context.agent.list());
+      assertInstalled(agentListData(await context.agent.list()));
 
       stage = "adapter cleanup";
       if (cleanup !== undefined) {
@@ -534,7 +541,7 @@ export default {
       }
 
       stage = "disposed-state assertion";
-      assertDisposed(await context.agent.list());
+      assertDisposed(agentListData(await context.agent.list()));
 
       await record(${JSON.stringify(V2_CAPABILITY_SURFACE)});
       await record("setup");

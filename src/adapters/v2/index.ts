@@ -67,10 +67,14 @@ export {
   type V2AgentDomain,
   type V2AgentEditor,
   type V2AgentInfo,
+  type V2AgentListLocation,
+  type V2AgentListResult,
   type V2AgentModelRef,
   type V2AgentPermissionRule,
   type V2AgentRegistrationHandle,
 } from "./agent-domain";
+
+export { unwrapV2AgentListResult } from "./agent-list";
 
 export {
   createV2AgentPermissionRulesCapability,

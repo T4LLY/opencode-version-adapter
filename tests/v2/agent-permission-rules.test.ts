@@ -23,6 +23,13 @@ function assertJSONEqual(actual: unknown, expected: unknown, message: string): v
   assert(JSON.stringify(actual) === JSON.stringify(expected), message);
 }
 
+function v2AgentListLocation() {
+  return {
+    directory: "C:/repo",
+    project: { id: "project", directory: "C:/repo", canonical: "C:/repo" },
+  };
+}
+
 const hostDefaults: readonly V2AgentPermissionRule[] = Object.freeze([
   Object.freeze({ action: "external_directory", resource: "*", effect: "ask" }),
 ]);
@@ -49,8 +56,11 @@ class ReplayAgentDomain {
     this.rebuild();
   }
 
-  async list(): Promise<readonly V2AgentInfo[]> {
-    return [...this.agents.values()];
+  async list() {
+    return {
+      location: v2AgentListLocation(),
+      data: [...this.agents.values()],
+    };
   }
 
   async transform(update: (editor: V2AgentEditor) => void) {

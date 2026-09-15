@@ -353,6 +353,14 @@ The initial agent capability MUST support registering the consumer-provided agen
 - **AND** the consumer decides whether a matching identifier is rejected, replaced, or otherwise handled
 - **AND** the adapter does not silently invent a collision policy
 
+#### Scenario: V2 Agent listing uses the pinned Promise response envelope
+
+- **GIVEN** the active generation is OpenCode v2.0.3
+- **WHEN** Agent registration or permission mapping reads existing Agents through the Promise `AgentDomain`
+- **THEN** the adapter treats `agent.list()` as returning native `AgentListOutput` with `{ location, data }`
+- **AND** capability logic enumerates only the `data` Agent array after generation-local normalization
+- **AND** the adapter does not assume that the Promise API returns the Agent array directly
+
 #### Scenario: Registration and permission mapping remain separate
 
 - **WHEN** a consumer registers an Agent and also supplies ordered permission intent
