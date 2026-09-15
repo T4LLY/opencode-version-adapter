@@ -130,15 +130,6 @@ export function createIntegratedV1ServerPlugin(
 
   const chatParamsHandlers: V1ChatParamsHandler[] = [];
   if (
-    required.has(CAPABILITIES.modelRequestGate) &&
-    options.bindings.modelRequestGate !== undefined
-  ) {
-    capabilityAdapters.push(passiveCapability(CAPABILITIES.modelRequestGate));
-    chatParamsHandlers.push(
-      createV1ModelRequestGateHandler(options.bindings.modelRequestGate),
-    );
-  }
-  if (
     required.has(CAPABILITIES.sessionAgentModelObservation) &&
     options.bindings.sessionAgentModelObservation !== undefined
   ) {
@@ -149,6 +140,15 @@ export function createIntegratedV1ServerPlugin(
       createV1SessionAgentModelObservationHandler(
         options.bindings.sessionAgentModelObservation,
       ),
+    );
+  }
+  if (
+    required.has(CAPABILITIES.modelRequestGate) &&
+    options.bindings.modelRequestGate !== undefined
+  ) {
+    capabilityAdapters.push(passiveCapability(CAPABILITIES.modelRequestGate));
+    chatParamsHandlers.push(
+      createV1ModelRequestGateHandler(options.bindings.modelRequestGate),
     );
   }
   if (chatParamsHandlers.length > 0) {

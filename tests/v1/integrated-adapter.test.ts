@@ -123,7 +123,7 @@ async function assertAllV1MappingsComposeBehindOneServer(): Promise<void> {
   await hooks.config(config);
 
   assert(
-    events.join("|") === "workspace:demand|event|gate|observe|before|after",
+    events.join("|") === "workspace:demand|event|observe|gate|before|after",
     "integrated v1 hooks must preserve the independent semantic callbacks",
   );
   assert(config.subagent_depth === 4, "integrated config must apply subagent depth");
@@ -135,6 +135,51 @@ async function assertAllV1MappingsComposeBehindOneServer(): Promise<void> {
   );
 
   await hooks.dispose();
+  await hooks.dispose();
+}
+
+async function assertObservationRunsBeforeRejectedGate(): Promise<void> {
+  const events: string[] = [];
+  const rejection = new Error("blocked");
+  const plugin = createIntegratedV1ServerPlugin({
+    requiredCapabilities: [
+      CAPABILITIES.modelRequestGate,
+      CAPABILITIES.sessionAgentModelObservation,
+    ],
+    bindings: {
+      modelRequestGate: () => {
+        events.push("gate");
+        throw rejection;
+      },
+      sessionAgentModelObservation: () => {
+        events.push("observe");
+      },
+    },
+  });
+
+  const hooks = await plugin({});
+  assert(hooks["chat.params"] !== undefined, "chat.params hook must be present");
+
+  let error: unknown;
+  try {
+    await hooks["chat.params"](
+      {
+        sessionID: "session-rejected",
+        agent: "worker",
+        model: { id: "gpt-5.6-sol", providerID: "openai" },
+      },
+      {},
+    );
+  } catch (caught) {
+    error = caught;
+  }
+
+  assert(error === rejection, "v1 gate rejection must preserve the original failure");
+  assert(
+    events.join("|") === "observe|gate",
+    "v1 observation must record the attempted identity before a gate rejection",
+  );
+
   await hooks.dispose();
 }
 
@@ -186,5 +231,6 @@ async function assertMissingBindingFailsBeforeWorkspaceMutation(): Promise<void>
 
 void (async () => {
   await assertAllV1MappingsComposeBehindOneServer();
+  await assertObservationRunsBeforeRejectedGate();
   await assertMissingBindingFailsBeforeWorkspaceMutation();
 })();

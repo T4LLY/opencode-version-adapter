@@ -258,13 +258,20 @@ The specification update MUST be driven by a concrete consumer requirement and M
 
 ### Requirement: Model request gating is distinct from identity observation
 
-The adapter MUST represent a blocking model-request gate independently from passive session agent/model observation. A generation MAY implement both semantics through one native hook, but the shared contract MUST NOT require them to remain coupled.
+The adapter MUST represent a blocking model-request gate independently from passive session agent/model observation. A generation MAY implement both semantics through one native hook, but the shared contract MUST NOT require them to remain coupled. Passive observation records that a model request reached the adapter boundary with a stable session/agent/model identity; it does not assert that admission control succeeded or that provider execution occurred. When one native hook carries both semantics, observation MUST run before the blocking gate so a later gate rejection does not suppress that attempted identity.
 
 #### Scenario: Consumer blocks a model request before provider execution
 
 - **WHEN** a consumer requires admission control before an OpenCode model request proceeds
 - **THEN** the model-request gate is awaited before the provider request is allowed to continue
 - **AND** the gate receives enough stable identity to distinguish the session, agent, provider, and model required by the consumer
+
+#### Scenario: Gate rejection does not erase attempted identity
+
+- **WHEN** passive observation and the blocking model-request gate share one native hook and the gate rejects the request
+- **THEN** the observation callback receives the stable request identity before the gate is invoked
+- **AND** the original gate rejection still prevents the provider request from continuing
+- **AND** the observation does not imply that provider execution occurred
 
 #### Scenario: Consumer only observes session identity
 

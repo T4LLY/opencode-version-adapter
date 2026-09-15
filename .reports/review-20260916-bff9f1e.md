@@ -130,7 +130,7 @@ Added root-level `TESTING.md` documenting the canonical PowerShell verification 
 - **Trigger:** N/A (unreachable).
 - **Verification:** Optional cleanup with a type-level exhaustiveness note; no behavior change.
 
-### [ ] C9. Cross-generation behavioral divergence: gate rejection suppresses observation in v1 but not v2
+### [Fixed] C9. Cross-generation behavioral divergence: gate rejection suppresses observation in v1 but not v2
 
 - **Severity:** Low–Medium (semantic contract clarity)
 - **Confidence:** Plausible
@@ -141,6 +141,10 @@ Added root-level `TESTING.md` documenting the canonical PowerShell verification 
 - **Impact:** Consumers porting observation semantics from v2 to v1 (or comparing telemetry across hosts) see fewer observations in v1 whenever the gate rejects.
 - **Trigger:** Bind both `modelRequestGate` (that rejects some requests) and `sessionAgentModelObservation` on v1; issue a rejected request.
 - **Verification:** Add a v1 test asserting observation is skipped when the gate throws; document the divergence in design.md or reorder so observation runs before the gate (if observation of rejected requests is desired).
+
+#### Update — 2026-09-16 09:39 — Base abe009a
+
+Verified the v1 shared `chat.params` composition invoked the gate before passive observation, so a gate rejection suppressed the attempted identity. OpenSpec now defines observation as recording an attempted session/agent/model identity at the adapter boundary, not successful provider execution. The integrated v1 composition now invokes observation before the blocking gate; a regression test verifies the observer runs once before a rejected gate and that the original gate error is preserved.
 
 ### [ ] C10. v1 config hook's shallow-copy draft shares per-agent record values with the host config object
 
