@@ -66,7 +66,7 @@ Reproduced directly against `src/contract/lifecycle.ts`: the first `dispose()` r
 - **Trigger:** Pass `requiredCapabilities: [agentRegistration, agentRegistration]`.
 - **Verification:** Either dedupe ids when building setup order or reject duplicates with a contract validation error; add a unit test.
 
-### [ ] C5. No documented or discoverable test command; test suite is not runner-compatible
+### [Fixed] C5. No documented or discoverable test command; test suite is not runner-compatible
 
 - **Severity:** Medium (maintainability)
 - **Confidence:** High-confidence
@@ -77,6 +77,10 @@ Reproduced directly against `src/contract/lifecycle.ts`: the first `dispose()` r
 - **Impact:** Suite cannot be CI-gated; false-green risk with `bun test`.
 - **Trigger:** Any contributor or CI attempting to validate the repo.
 - **Verification:** Document `bun tests/<file>` (or `fd -e ts . tests | xargs -I{} bun {}`) in README/AGENTS.md, or convert tests to `bun:test` registrations so `bun test` actually collects them.
+
+#### Update — 2026-09-16 07:58 — Base ce08eec
+
+Added root-level `TESTING.md` documenting the canonical PowerShell verification flow: compile `src/` and `tests/` with TypeScript 5.8.3 into `.tmp-test`, execute every generated `*.test.js` with Node, then run strict OpenSpec validation. The document also records the real-loader smoke command and explicitly warns that `bun test` collects zero tests and direct `node --test` is not the supported path. The equivalent compile-and-run path was executed in this environment with TypeScript 5.8.3 and all 23 generated test files passed under Node; the OpenSpec CLI is not installed here, so strict OpenSpec validation was not re-run. This fixes test-command discoverability without introducing package-manager metadata or choosing a new build system.
 
 ### [ ] C6. `toV2ModelRequestIdentity` performs no runtime guard on `input.model`
 
