@@ -10,7 +10,7 @@ It currently focuses on normalizing selected OpenCode v1 and v2 behaviors so con
 
 ## Install
 
-npm install opencode-version-adapter
+npm install @t4lly/opencode-version-adapter
 
 ## Usage
 
