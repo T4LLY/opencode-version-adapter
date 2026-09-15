@@ -52,7 +52,7 @@ The capability names below describe semantic responsibilities discovered in Phas
 | dynamic agent registration | FOA | native: config hook mutates `config.agent` | native: agent transform `update(id, ...)` creates a missing agent ID before applying the update | shared capability |
 | ordered agent permission rules | FOA | native: ordered rules use last matching rule | native: ordered rules also use last matching rule | shared capability; representation conversion is generation-specific |
 | global subagent-depth control | FOA | native: `config.subagent_depth`, enforced by task execution | unsupported: v2.0.3 canonical config and agent schemas contain no depth control exposed to plugins | shared capability with explicit v2 unsupported state |
-| client application logging | FOA diagnostics | native: `client.app.log` | unsupported by the v2.0.3 Promise plugin context; `app` exposes metadata only | do not promote to an initial required shared capability because FOA treats it as best-effort diagnostics |
+| client application logging | FOA diagnostics | native: `client.app.log` | unsupported by the v2.0.3 Promise plugin context; `app` exposes metadata only | do not promote native application logging to a required shared capability; use the generation-independent optional adapter-diagnostic boundary for adapter-originated warnings and delegate to host logging only where verified |
 | workspace adapter registration | demand-runtime | native: `experimental_workspace.register` | unsupported: v2.0.3 Promise plugin context exposes no workspace registration domain | separate capability, implemented only in the later workspace phase |
 | external TUI runtime and UI/keymap/state/client surface | skill-usage | native for the v1 consumer runtime | not yet claimed: v2.0.3 exposes a materially different public TUI contract, but the external loading path and complete skill-usage semantic mapping are deferred to the TUI phase | separate TUI runtime boundary; no server-adapter claim |
 
@@ -227,6 +227,30 @@ Alternative considered: forward raw OpenCode errors unchanged.
 
 Rejected because consumers would then depend on version-specific error types and messages that this package is intended to isolate.
 
+### Decision: Keep adapter diagnostics optional and generation-independent
+
+Recoverable adapter conditions may be surfaced through an optional structured diagnostic reporter supplied at the adapter boundary. The reporter is part of the public compatibility contract but is not a `CapabilityId`: diagnostics describe the adapter's own operation and must not make host feature support appear stronger or weaker than it is.
+
+The minimum diagnostic shape carries `severity`, a stable `code`, a human-readable `message`, and optional generation-independent context such as the related `CapabilityId`. The first concrete need is warning about duplicate required-capability declarations, so only warning severity is required initially. General-purpose application logging remains outside the shared capability inventory until a consumer requires broader semantics.
+
+Integrated boundaries SHOULD map adapter diagnostics onto verified host-native structured logging where that mapping exists. For the pinned evidence baseline, OpenCode v1.18.30 can use `client.app.log`; OpenCode v2.0.3's Promise plugin context does not provide an equivalent host-logging operation, so v2 must remain usable with an externally supplied reporter or with no reporter. The shared contract never exposes the native logger type.
+
+Diagnostic delivery is best-effort. No reporter means no diagnostic side effect, and the adapter does not fall back to `console`. A reporter failure is isolated so a recoverable condition cannot become an initialization failure merely because warning delivery failed.
+
+Alternative considered: make OpenCode client logging itself a shared required capability.
+
+Rejected because the pinned generations do not expose equivalent plugin-context logging semantics and the immediate requirement is adapter diagnostics, not a version-independent application logging service.
+
+### Decision: Treat required capabilities as a set before setup ordering
+
+`requiredCapabilities` is represented as an ordered readonly array for a small, dependency-aware setup sequence, but its semantic meaning is a set of required capabilities. Combining independent feature groups can naturally repeat the same requirement, so duplicate ids are not treated as malformed input.
+
+Before support validation, dependency ordering, and installation, generation adapters normalize the sequence to first-occurrence order. Each distinct required capability is therefore validated and installed once. If one or more duplicates were removed, the adapter emits one `duplicate-required-capability` warning per duplicated capability when a diagnostic reporter is available; otherwise normalization remains silent.
+
+Alternative considered: reject duplicate capability ids as adapter initialization errors.
+
+Rejected because duplicate declarations can arise from ordinary composition of independent consumer feature sets and do not represent an ambiguous semantic requirement.
+
 ### Decision: Keep internal modules non-public by default
 
 The package root is the normal consumer boundary. Internal helpers, generation adapters, and capability implementations are not public API merely because they exist as source modules. Version-specific exports are added only when a real testing, debugging, or consumer requirement justifies them.
@@ -240,6 +264,8 @@ Repository-internal generation tests are intentionally different from consumer i
 #### Phase 1 public contract boundary
 
 The initial package-root surface is limited to the evidence-backed capability identifiers, capability support states, required-capability validation, and the stable adapter error family. The root exports `CAPABILITIES`, `CapabilityId`, `RequiredCapabilities`, `CAPABILITY_SUPPORT`, `CapabilitySupport`, `CapabilitySupportMap`, `assertRequiredCapabilitiesSupported`, `ADAPTER_ERROR_CATEGORY`, `AdapterErrorCategory`, `VersionAdapterError`, `UnsupportedCapabilityError`, `AdapterInitializationError`, and `InvalidHostContextError`. `contract/` remains an implementation path rather than an additional documented consumer import path. No generation adapter, capability implementation module, client shim, TUI surface, or consumer-specific type is exported in Phase 1.
+
+This later specification update deliberately extends the package-root contract with the minimal generation-independent diagnostic types needed to supply an optional reporter. Exact exported identifiers remain an implementation choice, but the public surface MUST expose the structured diagnostic value and reporter type without exposing OpenCode-native logger types.
 
 The repository did not establish a package manager or build/test toolchain before Phase 1. Phase 1 therefore does not add package-manager metadata or select a build system merely to host the contract. Tooling configuration remains a separate decision; the contract stays ordinary TypeScript with no runtime dependency on OpenCode or third-party packages.
 
@@ -274,6 +300,7 @@ src/
 │  ├─ plugin.ts
 │  ├─ capabilities.ts
 │  ├─ errors.ts
+│  ├─ diagnostics.ts            # create when implementing the specified optional reporter
 │  └─ lifecycle.ts              # create only when required
 │
 ├─ adapters/

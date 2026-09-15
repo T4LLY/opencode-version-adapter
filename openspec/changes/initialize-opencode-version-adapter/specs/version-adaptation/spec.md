@@ -132,6 +132,61 @@ Exact exported error class names MAY be decided during implementation, but these
 - **THEN** setup fails explicitly as an invalid host context
 - **AND** the adapter does not guess a generation and continue
 
+### Requirement: Recoverable adapter diagnostics are structured and optional
+
+The adapter MUST provide a generation-independent way for consumers or integration boundaries to receive structured diagnostics for recoverable adapter conditions that do not justify failing setup. Diagnostic reporting is advisory and MUST NOT itself become a required capability.
+
+A diagnostic emitted by the adapter MUST include a severity, a stable machine-readable code, and a human-readable message. It MAY include the related capability identifier and other generation-independent context needed to identify the condition. The initially required severity is `warning`; additional severities MUST NOT be added without a concrete consumer need.
+
+The diagnostic reporter MUST be optional. When no reporter is provided, the adapter MUST preserve the same functional behavior without falling back to `console` output. A reporter failure MUST NOT convert an otherwise recoverable condition into adapter setup failure.
+
+#### Scenario: Consumer supplies a diagnostic reporter
+
+- **WHEN** adapter setup encounters a recoverable condition for which this specification defines a diagnostic
+- **THEN** the adapter reports the structured diagnostic through the supplied generation-independent reporter
+- **AND** consumer code does not need to interpret an OpenCode-generation-specific logging type
+
+#### Scenario: No diagnostic reporter is supplied
+
+- **WHEN** the same recoverable condition occurs and no reporter is available
+- **THEN** the adapter continues with the specified functional behavior
+- **AND** it does not write directly to `console` as an implicit fallback
+
+#### Scenario: An integrated OpenCode generation exposes usable host logging
+
+- **WHEN** an OpenCode integration boundary has a verified structured host-logging operation that can represent an adapter diagnostic
+- **THEN** that boundary SHOULD delegate adapter diagnostics to the host logger
+- **AND** the shared diagnostic contract remains independent of the native logging API
+- **AND** absence of an equivalent host logger does not make the adapter capability unsupported
+
+### Requirement: Required capability declarations have set semantics
+
+`requiredCapabilities` MUST describe which semantic capabilities are required, not how many times they are installed. Repeated occurrences of the same capability identifier therefore MUST NOT cause repeated installation or repeated ownership of the same generation mapping.
+
+The adapter MUST normalize duplicate required-capability identifiers before dependency ordering and capability installation while preserving the first occurrence order for otherwise independent capabilities. Duplicate declarations are recoverable input and MUST NOT fail setup solely because the same required capability was listed more than once.
+
+When a duplicate is detected and a diagnostic reporter is available, the adapter MUST emit one warning diagnostic with stable code `duplicate-required-capability` for each duplicated capability identifier. The diagnostic MUST identify the duplicated capability.
+
+#### Scenario: One capability is declared more than once
+
+- **WHEN** `requiredCapabilities` contains the same capability identifier multiple times
+- **THEN** support and mapping validation treat that identifier as one required capability
+- **AND** its generation mapping is installed at most once
+- **AND** dependency ordering is applied to the deduplicated capability sequence
+
+#### Scenario: Duplicate declaration can be diagnosed
+
+- **WHEN** a duplicated required capability is normalized and a diagnostic reporter is available
+- **THEN** the reporter receives a `warning` diagnostic with code `duplicate-required-capability`
+- **AND** the diagnostic identifies the duplicated capability
+- **AND** setup continues if all distinct required capabilities are otherwise valid and supported
+
+#### Scenario: Duplicate declaration has no reporter
+
+- **WHEN** a duplicated required capability is normalized and no diagnostic reporter is available
+- **THEN** setup still deduplicates and continues
+- **AND** duplicate handling does not write directly to `console`
+
 ### Requirement: Public imports are intentionally bounded
 
 Consumer plugins MUST depend only on documented public exports of `opencode-version-adapter`.

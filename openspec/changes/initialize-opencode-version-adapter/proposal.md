@@ -10,6 +10,8 @@ OpenCode plugin API generations expose different integration contracts, which ot
 - Define compatibility per capability rather than claiming complete support for an OpenCode generation.
 - Require capabilities to be added incrementally from real consumer requirements instead of mirroring the full OpenCode plugin API.
 - Require unsupported mandatory capabilities to fail explicitly rather than degrade silently.
+- Define an optional, structured adapter-diagnostic boundary for recoverable compatibility conditions without turning diagnostics into a required capability.
+- Treat `requiredCapabilities` as a set-semantic declaration: duplicate ids are diagnosed when possible, deduplicated, and installed only once.
 - Establish OpenCode v1 and OpenCode v2 as the initial generations, while allowing later generations to be added without rewriting consumer business logic.
 - Derive the initial capability inventory from four real reference consumers: Folder-Oriented Agents (FOA), demand-runtime, opencode-agents-feed, and opencode-skill-usage.
 

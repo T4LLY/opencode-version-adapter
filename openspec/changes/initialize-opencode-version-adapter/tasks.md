@@ -29,6 +29,9 @@
 - [x] 4.2 Implement only the generic v2 mappings required by the approved capability set; verify no oh-my-opencode-slim-specific orchestration, background jobs, prompts, or policy is included.
 - [x] 4.3 Add v2 adapter tests for each claimed native or emulated capability; verify unsupported required capabilities fail explicitly.
 - [x] 4.4 Before adding each new capability mapping, review responsibility concentration against `design.md`; split capability mapping, lifecycle ownership, or shim responsibilities before implementation when a module is becoming a catch-all or approaches approximately 600 LOC.
+- [x] 4.5 Specify the optional structured adapter-diagnostic boundary and set semantics for `requiredCapabilities` before changing production code; verify diagnostics are not promoted to a required capability and duplicate declarations are defined as recoverable.
+- [ ] 4.6 Implement the public diagnostic reporter contract and integration-boundary delegation; verify missing or failing reporters do not change otherwise-valid setup behavior and no implicit `console` fallback is introduced.
+- [ ] 4.7 Normalize duplicate required-capability ids before support validation, dependency ordering, and installation; emit `duplicate-required-capability` warnings when a reporter is available and add regression coverage proving each distinct capability installs once.
 
 ## 5. Verify real runtime compatibility
 
