@@ -1,7 +1,7 @@
-import { CAPABILITIES } from "../../src/contract/capabilities";
-import type { AdapterDiagnostic } from "../../src/contract/diagnostics";
-import { ADAPTER_ERROR_CATEGORY, InvalidHostContextError } from "../../src/contract/errors";
-import { createV2HostEventDeliveryCapability } from "../../src/adapters/v2";
+import { CAPABILITIES } from "../../src/contract/capabilities.js";
+import type { AdapterDiagnostic } from "../../src/contract/diagnostics.js";
+import { ADAPTER_ERROR_CATEGORY, InvalidHostContextError } from "../../src/contract/errors.js";
+import { createV2HostEventDeliveryCapability } from "../../src/adapters/v2/index.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);

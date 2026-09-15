@@ -1,4 +1,4 @@
-import type { MaybePromise } from "./lifecycle";
+import type { MaybePromise } from "./lifecycle.js";
 
 /** Minimum shared context required immediately before one host tool executes. */
 export interface ToolBeforeExecutionInput {

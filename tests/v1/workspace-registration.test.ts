@@ -1,13 +1,13 @@
-import { CAPABILITIES } from "../../src/contract/capabilities";
-import { InvalidHostContextError } from "../../src/contract/errors";
+import { CAPABILITIES } from "../../src/contract/capabilities.js";
+import { InvalidHostContextError } from "../../src/contract/errors.js";
 import type {
   WorkspaceAdapter,
   WorkspaceInfo,
-} from "../../src/contract/workspace-registration";
+} from "../../src/contract/workspace-registration.js";
 import {
   createV1WorkspaceRegistrationCapability,
   type V1WorkspaceAdapter,
-} from "../../src/adapters/v1/capabilities/workspace-registration";
+} from "../../src/adapters/v1/capabilities/workspace-registration.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {

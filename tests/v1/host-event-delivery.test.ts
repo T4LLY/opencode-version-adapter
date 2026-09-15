@@ -1,4 +1,4 @@
-import { createV1HostEventHook } from "../../src/adapters/v1/capabilities/host-event-delivery";
+import { createV1HostEventHook } from "../../src/adapters/v1/capabilities/host-event-delivery.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {

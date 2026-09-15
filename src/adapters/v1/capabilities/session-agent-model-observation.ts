@@ -1,8 +1,8 @@
-import type { SessionAgentModelObserver } from "../../../contract/model-request";
+import type { SessionAgentModelObserver } from "../../../contract/model-request.js";
 import {
   toModelRequestIdentity,
   type V1ChatParamsHandler,
-} from "../chat-params";
+} from "../chat-params.js";
 
 /**
  * Map passive session/agent/model observation onto OpenCode v1 `chat.params`

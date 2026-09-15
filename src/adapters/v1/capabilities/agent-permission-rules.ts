@@ -3,9 +3,9 @@ import type {
   AgentPermissionRuleGroup,
   AgentPermissionRules,
   AgentPermissionRulesProvider,
-} from "../../../contract/agent-permission";
-import { InvalidHostContextError } from "../../../contract/errors";
-import type { V1ConfigHandler } from "../config";
+} from "../../../contract/agent-permission.js";
+import { InvalidHostContextError } from "../../../contract/errors.js";
+import type { V1ConfigHandler } from "../config.js";
 
 export type V1PermissionPatternMap = Record<string, AgentPermissionAction>;
 export type V1AgentPermissionConfig = Record<

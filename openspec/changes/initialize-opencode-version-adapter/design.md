@@ -262,13 +262,13 @@ Rejected because consumers would acquire dependencies on implementation structur
 
 Repository-internal generation tests are intentionally different from consumer imports. Tests under `tests/v1/` and `tests/v2/` MAY import the corresponding generation adapter and capability implementation paths directly when validating generation-specific mapping semantics. Those white-box imports do not make the referenced modules public API. Shared contract tests under `tests/contract/` MUST remain generation-independent.
 
-#### Phase 1 public contract boundary
+#### Current public contract boundary
 
-The initial package-root surface is limited to the evidence-backed capability identifiers, capability support states, required-capability validation, and the stable adapter error family. The root exports `CAPABILITIES`, `CapabilityId`, `RequiredCapabilities`, `CAPABILITY_SUPPORT`, `CapabilitySupport`, `CapabilitySupportMap`, `assertRequiredCapabilitiesSupported`, `ADAPTER_ERROR_CATEGORY`, `AdapterErrorCategory`, `VersionAdapterError`, `UnsupportedCapabilityError`, `AdapterInitializationError`, and `InvalidHostContextError`. `contract/` remains an implementation path rather than an additional documented consumer import path. No generation adapter, capability implementation module, client shim, TUI surface, or consumer-specific type is exported in Phase 1.
+The package root remains the only normal consumer import boundary. In addition to the evidence-backed capability identifiers, support metadata, errors, diagnostics, and generation-independent semantic contracts, the root now exports `createOpenCodeServerPlugin` and its generation-independent options/bindings/module types. This is required by the first real consumer migration (`opencode-skill-usage`); keeping the factory under `internal/` would force consumers to violate the documented public-import rule.
 
-This later specification update deliberately extends the package-root contract with the minimal generation-independent diagnostic types needed to supply an optional reporter. Exact exported identifiers remain an implementation choice, but the public surface MUST expose the structured diagnostic value and reporter type without exposing OpenCode-native logger types.
+The server factory deliberately hides v1/v2 native context and hook implementation types at its public boundary. Generation-specific adapters and capability modules remain implementation details and are not exported merely because the factory composes them.
 
-The repository did not establish a package manager or build/test toolchain before Phase 1. Phase 1 therefore does not add package-manager metadata or select a build system merely to host the contract. Tooling configuration remains a separate decision; the contract stays ordinary TypeScript with no runtime dependency on OpenCode or third-party packages.
+The repository now defines npm package metadata under the unscoped package name `opencode-version-adapter`. Distribution is compiled Node ESM plus declarations from `dist/`; consumers do not execute repository TypeScript directly. The build uses TypeScript only and retains no runtime dependency on OpenCode or third-party packages. Relative TypeScript imports use Node-compatible `.js` specifiers so emitted ESM needs no custom rewrite step.
 
 ### Decision: Track upstream-derived bridge code explicitly
 
@@ -295,7 +295,7 @@ The following is the target structure, not a requirement to create empty files p
 ```text
 src/
 ├─ index.ts
-├─ define-plugin.ts
+├─ server-plugin.ts
 │
 ├─ contract/
 │  ├─ plugin.ts

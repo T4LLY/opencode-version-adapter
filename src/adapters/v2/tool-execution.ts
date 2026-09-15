@@ -1,4 +1,4 @@
-import type { MaybePromise } from "../../contract/lifecycle";
+import type { MaybePromise } from "../../contract/lifecycle.js";
 
 export interface V2ToolExecuteBeforeEvent {
   readonly tool: string;

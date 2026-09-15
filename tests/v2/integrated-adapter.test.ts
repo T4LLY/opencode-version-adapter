@@ -1,7 +1,7 @@
 import {
   CAPABILITIES,
   type RequiredCapabilities,
-} from "../../src/contract/capabilities";
+} from "../../src/contract/capabilities.js";
 import {
   createIntegratedV2Adapter,
   type V2AgentEditor,
@@ -10,8 +10,8 @@ import {
   type V2SessionHookRegistration,
   type V2ToolHooks,
   type V2ToolHookRegistration,
-} from "../../src/adapters/v2";
-import { AdapterInitializationError } from "../../src/contract/errors";
+} from "../../src/adapters/v2/index.js";
+import { AdapterInitializationError } from "../../src/contract/errors.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);

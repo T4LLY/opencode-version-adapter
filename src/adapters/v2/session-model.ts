@@ -1,5 +1,5 @@
-import type { MaybePromise } from "../../contract/lifecycle";
-import type { ModelRequestIdentity } from "../../contract/model-request";
+import type { MaybePromise } from "../../contract/lifecycle.js";
+import type { ModelRequestIdentity } from "../../contract/model-request.js";
 
 /** Narrow identity subset shared by the v2 context and model.request hooks. */
 export interface V2SessionModelIdentityInput {

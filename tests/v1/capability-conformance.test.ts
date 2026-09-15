@@ -1,6 +1,6 @@
-import { assertRequiredCapabilitiesSupported } from "../../src/contract/capabilities";
-import { OPEN_CODE_V1_CAPABILITY_SUPPORT } from "../../src/adapters/v1";
-import { runCapabilityConformanceSuite } from "../contract/capability-conformance";
+import { assertRequiredCapabilitiesSupported } from "../../src/contract/capabilities.js";
+import { OPEN_CODE_V1_CAPABILITY_SUPPORT } from "../../src/adapters/v1/index.js";
+import { runCapabilityConformanceSuite } from "../contract/capability-conformance.js";
 
 /**
  * Run the generation-independent capability-support contract against the real

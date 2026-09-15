@@ -1,5 +1,5 @@
-import { InvalidHostContextError } from "../../contract/errors";
-import type { V2AgentInfo, V2AgentListResult } from "./agent-domain";
+import { InvalidHostContextError } from "../../contract/errors.js";
+import type { V2AgentInfo, V2AgentListResult } from "./agent-domain.js";
 
 /**
  * Normalize the pinned OpenCode v2.0.3 Promise AgentApi.list() envelope.

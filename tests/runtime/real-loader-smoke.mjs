@@ -343,16 +343,10 @@ async function assertVersion(runtime) {
 }
 
 function createPluginSource() {
-  const capabilitiesUrl = pathToFileURL(
-    join(repoRoot, "src", "contract", "capabilities.ts"),
-  ).href;
-  const serverPluginUrl = pathToFileURL(
-    join(repoRoot, "src", "internal", "server-plugin.ts"),
-  ).href;
+  const packageUrl = pathToFileURL(join(repoRoot, "dist", "index.js")).href;
 
   return `import { appendFile } from "node:fs/promises";
-import { CAPABILITIES } from ${JSON.stringify(capabilitiesUrl)};
-import { createOpenCodeServerPlugin } from ${JSON.stringify(serverPluginUrl)};
+import { CAPABILITIES, createOpenCodeServerPlugin } from ${JSON.stringify(packageUrl)};
 
 const marker = process.env.${MARKER_ENV};
 if (!marker) {

@@ -1,4 +1,4 @@
-import type { MaybePromise } from "./lifecycle";
+import type { MaybePromise } from "./lifecycle.js";
 
 export const AGENT_PERMISSION_ACTIONS = Object.freeze({
   allow: "allow",

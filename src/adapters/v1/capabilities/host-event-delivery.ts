@@ -1,4 +1,4 @@
-import type { HostEventDelivery } from "../../../contract/host-event-delivery";
+import type { HostEventDelivery } from "../../../contract/host-event-delivery.js";
 
 const HOST_OWNED_EVENT_SIGNAL = new AbortController().signal;
 

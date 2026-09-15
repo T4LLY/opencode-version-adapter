@@ -1,7 +1,7 @@
-import { InvalidHostContextError } from "../../src/contract/errors";
-import { createV1ConfigHook } from "../../src/adapters/v1/config";
-import { createV1AgentRegistrationHandler } from "../../src/adapters/v1/capabilities/agent-registration";
-import { createV1SubagentDepthHandler } from "../../src/adapters/v1/capabilities/subagent-depth";
+import { InvalidHostContextError } from "../../src/contract/errors.js";
+import { createV1ConfigHook } from "../../src/adapters/v1/config.js";
+import { createV1AgentRegistrationHandler } from "../../src/adapters/v1/capabilities/agent-registration.js";
+import { createV1SubagentDepthHandler } from "../../src/adapters/v1/capabilities/subagent-depth.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {

@@ -6,7 +6,7 @@ OpenCode plugin API generations expose different integration contracts, which ot
 
 ## What Changes
 
-- Introduce `@xxx/opencode-version-adapter` as an OpenCode-specific compatibility boundary.
+- Introduce `opencode-version-adapter` as an OpenCode-specific compatibility boundary.
 - Define compatibility per capability rather than claiming complete support for an OpenCode generation.
 - Require capabilities to be added incrementally from real consumer requirements instead of mirroring the full OpenCode plugin API.
 - Require unsupported mandatory capabilities to fail explicitly rather than degrade silently.

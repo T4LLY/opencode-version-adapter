@@ -1,11 +1,11 @@
-import { CAPABILITIES } from "../../../contract/capabilities";
-import { InvalidHostContextError } from "../../../contract/errors";
-import type { SessionAgentModelObserver } from "../../../contract/model-request";
-import type { V2CapabilityAdapter } from "../adapter";
+import { CAPABILITIES } from "../../../contract/capabilities.js";
+import { InvalidHostContextError } from "../../../contract/errors.js";
+import type { SessionAgentModelObserver } from "../../../contract/model-request.js";
+import type { V2CapabilityAdapter } from "../adapter.js";
 import {
   toV2ModelRequestIdentity,
   type V2SessionHookContext,
-} from "../session-model";
+} from "../session-model.js";
 
 /**
  * Observe agent-loop identity through OpenCode v2.0.3's `context` hook without

@@ -1,8 +1,8 @@
 import type {
   AgentDefinition,
   AgentRegistration,
-} from "../../../contract/agent-registration";
-import type { V1ConfigHandler } from "../config";
+} from "../../../contract/agent-registration.js";
+import type { V1ConfigHandler } from "../config.js";
 
 /** Map one shared Agent definition to OpenCode v1's config representation. */
 export function toV1AgentConfig(

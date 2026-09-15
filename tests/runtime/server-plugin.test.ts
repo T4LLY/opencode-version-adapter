@@ -1,6 +1,8 @@
-import { CAPABILITIES } from "../../src/contract/capabilities";
-import { createOpenCodeServerPlugin } from "../../src/internal/server-plugin";
-import { UnsupportedCapabilityError } from "../../src/contract/errors";
+import {
+  CAPABILITIES,
+  createOpenCodeServerPlugin,
+  UnsupportedCapabilityError,
+} from "../../src/index.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
@@ -36,10 +38,15 @@ function selectLikeV2Loader(module: ModuleNamespace) {
 }
 
 async function assertOneDefaultExportSupportsBothLoaderShapes(): Promise<void> {
+  let cleanupCount = 0;
   const plugin = createOpenCodeServerPlugin({
     id: "adapter-smoke",
     requiredCapabilities: [CAPABILITIES.serverLifecycle],
-    bindings: {},
+    bindings: {
+      lifecycleCleanup() {
+        cleanupCount += 1;
+      },
+    },
   });
   const module = { default: plugin };
 
@@ -47,12 +54,40 @@ async function assertOneDefaultExportSupportsBothLoaderShapes(): Promise<void> {
   const v1Hooks = await v1({});
   assert(typeof v1Hooks.dispose === "function", "v1 loader must receive a dispose hook");
   await v1Hooks.dispose();
+  assert(cleanupCount === 1, "v1 disposal must run consumer lifecycle cleanup");
 
   const v2 = selectLikeV2Loader(module);
   assert(v2.id === "adapter-smoke", "v2 loader must preserve the shared plugin id");
   const cleanup = await v2.setup({});
   assert(typeof cleanup === "function", "v2 loader must receive one cleanup owner");
   await cleanup?.();
+  assert(Number(cleanupCount) === 2, "v2 cleanup must run consumer lifecycle cleanup");
+}
+
+async function assertBindingsCanBeCreatedFromHostOptions(): Promise<void> {
+  const seen: unknown[] = [];
+  const plugin = createOpenCodeServerPlugin({
+    id: "adapter-options",
+    requiredCapabilities: [CAPABILITIES.serverLifecycle],
+    createBindings({ options }) {
+      seen.push(options);
+      return {};
+    },
+  });
+
+  const v1 = selectLikeV1Loader({ default: plugin });
+  const v1Hooks = await plugin.server({}, { retentionDays: 7 });
+  await (v1Hooks as { dispose: () => Promise<void> }).dispose();
+
+  const v2 = selectLikeV2Loader({ default: plugin });
+  const cleanup = await v2.setup({ options: { retentionDays: 14 } });
+  await cleanup?.();
+
+  assert(
+    JSON.stringify(seen) === JSON.stringify([{ retentionDays: 7 }, { retentionDays: 14 }]),
+    "binding factory must receive generation-independent host options per activation",
+  );
+  void v1;
 }
 
 async function assertGenerationSupportDifferenceNeedsNoConsumerBranch(): Promise<void> {
@@ -106,5 +141,6 @@ async function assertGenerationSupportDifferenceNeedsNoConsumerBranch(): Promise
 
 void (async () => {
   await assertOneDefaultExportSupportsBothLoaderShapes();
+  await assertBindingsCanBeCreatedFromHostOptions();
   await assertGenerationSupportDifferenceNeedsNoConsumerBranch();
 })();

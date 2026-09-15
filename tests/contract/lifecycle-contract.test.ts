@@ -2,13 +2,13 @@ import {
   createAdapterHandle,
   type AdapterHandle,
   type Cleanup,
-} from "../../src/contract/lifecycle";
+} from "../../src/contract/lifecycle.js";
 import {
   LIFECYCLE_TEST_MODE,
   runLifecycleConformanceSuite,
   type LifecycleConformanceTarget,
   type LifecycleTestMode,
-} from "./lifecycle-conformance";
+} from "./lifecycle-conformance.js";
 
 class SyntheticLifecycleTarget implements LifecycleConformanceTarget {
   private cleanupCount = 0;

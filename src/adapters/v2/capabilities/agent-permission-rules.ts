@@ -2,15 +2,15 @@ import type {
   AgentPermissionRuleGroup,
   AgentPermissionRules,
   AgentPermissionRulesProvider,
-} from "../../../contract/agent-permission";
-import { CAPABILITIES } from "../../../contract/capabilities";
-import { InvalidHostContextError } from "../../../contract/errors";
-import type { V2CapabilityAdapter } from "../adapter";
+} from "../../../contract/agent-permission.js";
+import { CAPABILITIES } from "../../../contract/capabilities.js";
+import { InvalidHostContextError } from "../../../contract/errors.js";
+import type { V2CapabilityAdapter } from "../adapter.js";
 import type {
   V2AgentContext,
   V2AgentPermissionRule,
-} from "../agent-domain";
-import { unwrapV2AgentListResult } from "../agent-list";
+} from "../agent-domain.js";
+import { unwrapV2AgentListResult } from "../agent-list.js";
 
 function toV2PermissionGroup(
   group: AgentPermissionRuleGroup,

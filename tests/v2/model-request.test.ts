@@ -4,12 +4,12 @@ import {
   type V2SessionHooks,
   type V2SessionHookDomain,
   type V2SessionHookRegistration,
-} from "../../src/adapters/v2";
+} from "../../src/adapters/v2/index.js";
 import {
   ADAPTER_ERROR_CATEGORY,
   InvalidHostContextError,
-} from "../../src/contract/errors";
-import type { ModelRequestIdentity } from "../../src/contract/model-request";
+} from "../../src/contract/errors.js";
+import type { ModelRequestIdentity } from "../../src/contract/model-request.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);

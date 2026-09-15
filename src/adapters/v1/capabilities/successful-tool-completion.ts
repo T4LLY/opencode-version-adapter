@@ -1,4 +1,4 @@
-import type { SuccessfulToolCompletion } from "../../../contract/tool-execution";
+import type { SuccessfulToolCompletion } from "../../../contract/tool-execution.js";
 
 /** Narrow structural subset of OpenCode v1.18.30's after-tool hook input. */
 export interface V1ToolExecuteAfterInput {

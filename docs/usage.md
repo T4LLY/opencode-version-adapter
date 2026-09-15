@@ -2,6 +2,14 @@
 
 `opencode-version-adapter` is the OpenCode compatibility boundary. Consumers should depend on its normalized contract rather than OpenCode generation-specific behavior.
 
+## Server entrypoint
+
+Install `opencode-version-adapter` and import from the package root. Do not import `src/`, `internal/`, or generation adapter paths.
+
+A server consumer normally default-exports the result of `createOpenCodeServerPlugin`, declares only the capabilities it actually requires, and supplies generation-independent bindings for those capabilities. The same returned module exposes the v1 `server` shape and v2 `setup` shape; consumer code does not choose between them.
+
+The factory public types intentionally do not expose OpenCode v1/v2 native context types. If a required semantic value is missing from the normalized bindings, extend the adapter contract specification rather than reaching through to generation internals.
+
 ## Generation boundaries
 
 Do not branch on OpenCode v1/v2 behavior in normal consumer code when the adapter already owns that difference.

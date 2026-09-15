@@ -1,4 +1,4 @@
-import type { ToolBeforeExecution } from "../../../contract/tool-execution";
+import type { ToolBeforeExecution } from "../../../contract/tool-execution.js";
 
 /** Narrow structural subset of OpenCode v1.18.30's before-tool hook input. */
 export interface V1ToolExecuteBeforeInput {

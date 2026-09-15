@@ -1,7 +1,7 @@
 import type {
   AdapterHandle,
   MaybePromise,
-} from "../../src/contract/lifecycle";
+} from "../../src/contract/lifecycle.js";
 
 export const LIFECYCLE_TEST_MODE = Object.freeze({
   succeed: "succeed",

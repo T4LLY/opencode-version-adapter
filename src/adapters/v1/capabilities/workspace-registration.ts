@@ -1,13 +1,13 @@
-import { CAPABILITIES } from "../../../contract/capabilities";
-import { InvalidHostContextError } from "../../../contract/errors";
-import type { MaybePromise } from "../../../contract/lifecycle";
+import { CAPABILITIES } from "../../../contract/capabilities.js";
+import { InvalidHostContextError } from "../../../contract/errors.js";
+import type { MaybePromise } from "../../../contract/lifecycle.js";
 import type {
   LocalWorkspaceTarget,
   WorkspaceAdapter,
   WorkspaceInfo,
   WorkspaceRegistration,
-} from "../../../contract/workspace-registration";
-import type { V1CapabilityAdapter } from "../adapter";
+} from "../../../contract/workspace-registration.js";
+import type { V1CapabilityAdapter } from "../adapter.js";
 
 /** Narrow OpenCode v1 Workspace adapter surface used by registration. */
 export interface V1WorkspaceAdapter {

@@ -1,8 +1,8 @@
-import { CAPABILITIES } from "../../../contract/capabilities";
-import { InvalidHostContextError } from "../../../contract/errors";
-import type { SuccessfulToolCompletion } from "../../../contract/tool-execution";
-import type { V2CapabilityAdapter } from "../adapter";
-import type { V2ToolHookContext } from "../tool-execution";
+import { CAPABILITIES } from "../../../contract/capabilities.js";
+import { InvalidHostContextError } from "../../../contract/errors.js";
+import type { SuccessfulToolCompletion } from "../../../contract/tool-execution.js";
+import type { V2CapabilityAdapter } from "../adapter.js";
+import type { V2ToolHookContext } from "../tool-execution.js";
 
 /**
  * Deliver only OpenCode v2 completed tool events. Native error events and the

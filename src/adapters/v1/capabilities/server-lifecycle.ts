@@ -1,4 +1,4 @@
-import type { AdapterHandle } from "../../../contract/lifecycle";
+import type { AdapterHandle } from "../../../contract/lifecycle.js";
 
 /** OpenCode v1 `Hooks.dispose` shape used by the server plugin loader. */
 export type V1DisposeHook = () => Promise<void>;

@@ -102,6 +102,13 @@ The adapter MUST present a consistent setup-to-dispose lifecycle for adapter-own
 - **THEN** the adapter performs it only after all rollback-capable setup steps succeed
 - **AND** successful registration lifetime remains owned by the host rather than by a fabricated adapter cleanup
 
+#### Scenario: Consumer owns lifecycle cleanup
+
+- **WHEN** a server consumer supplies generation-independent lifecycle cleanup with the server lifecycle capability
+- **THEN** that cleanup is owned by the generation-level cleanup owner
+- **AND** it runs during host unload/disposal without the consumer implementing v1/v2 teardown branches
+- **AND** setup rollback runs it if it was acquired before a later rollback-capable setup step fails
+
 #### Scenario: Cleanup is requested more than once
 
 - **WHEN** the adapter cleanup operation is invoked more than once
@@ -205,6 +212,20 @@ Internal modules and generation implementation details MUST remain replaceable w
 - **THEN** it uses the package root or another explicitly documented public export
 - **AND** it does not need to import `internal/`, capability implementation modules, or generation adapter implementation files
 
+#### Scenario: Consumer creates one dual-generation server plugin
+
+- **WHEN** a consumer needs one server entrypoint that can be loaded by the supported OpenCode v1 and v2 baselines
+- **THEN** `createOpenCodeServerPlugin` is available from the package root
+- **AND** every generation-independent contract type referenced by its public options is available from the package root
+- **AND** the returned loader module does not require the consumer to import v1/v2 context or hook implementation types
+
+#### Scenario: Consumer bindings depend on plugin options
+
+- **WHEN** a consumer needs host-provided plugin options to construct its generation-independent bindings
+- **THEN** the public server factory can create bindings per activation from an opaque `options` value
+- **AND** OpenCode v1 server options and OpenCode v2 setup-context options are presented through the same generation-independent binding-factory context
+- **AND** consumer code does not branch on the active OpenCode generation to obtain those options
+
 #### Scenario: A version-specific export is proposed
 
 - **WHEN** testing, debugging, or a real consumer requirement needs a version-specific export
@@ -217,6 +238,23 @@ Internal modules and generation implementation details MUST remain replaceable w
 - **THEN** that test MAY import the matching generation implementation path directly
 - **AND** the white-box test import does not make that implementation path part of the documented consumer surface
 - **AND** shared tests under `tests/contract/` remain independent of generation implementation paths
+
+### Requirement: Package root is installable as Node ESM
+
+`opencode-version-adapter` MUST be consumable as an npm package without requiring consumers to execute TypeScript source files directly.
+
+#### Scenario: Consumer installs the package
+
+- **WHEN** the package is built for distribution
+- **THEN** the npm package name is `opencode-version-adapter`
+- **AND** the package root resolves to compiled ESM JavaScript and TypeScript declarations
+- **AND** runtime dependencies on OpenCode or a TypeScript loader are not required merely to import the package
+
+#### Scenario: Relative source imports are compiled for Node ESM
+
+- **WHEN** TypeScript source is emitted as Node ESM
+- **THEN** emitted relative imports resolve without a post-build rewrite step
+- **AND** the build output can be imported directly by Node
 
 ### Requirement: Reused upstream compatibility code remains traceable and generic
 

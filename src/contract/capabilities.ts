@@ -1,4 +1,4 @@
-import { UnsupportedCapabilityError } from "./errors";
+import { UnsupportedCapabilityError } from "./errors.js";
 
 /**
  * Shared semantic capabilities proven by the Phase 0 consumer/runtime survey.

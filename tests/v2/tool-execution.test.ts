@@ -4,15 +4,15 @@ import {
   type V2ToolHooks,
   type V2ToolHookDomain,
   type V2ToolHookRegistration,
-} from "../../src/adapters/v2";
+} from "../../src/adapters/v2/index.js";
 import {
   ADAPTER_ERROR_CATEGORY,
   InvalidHostContextError,
-} from "../../src/contract/errors";
+} from "../../src/contract/errors.js";
 import type {
   SuccessfulToolCompletionInput,
   ToolBeforeExecutionInput,
-} from "../../src/contract/tool-execution";
+} from "../../src/contract/tool-execution.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);

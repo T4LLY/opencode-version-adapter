@@ -1,4 +1,4 @@
-import type { MaybePromise } from "../../contract/lifecycle";
+import type { MaybePromise } from "../../contract/lifecycle.js";
 
 /** Narrow structural subset of OpenCode v1's mutable config hook input. */
 export interface V1ConfigInput {

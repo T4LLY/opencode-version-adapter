@@ -1,7 +1,7 @@
 import {
   AGENT_MODES,
   type AgentRegistrationContext,
-} from "../../src/contract/agent-registration";
+} from "../../src/contract/agent-registration.js";
 import {
   applyV2AgentDefinition,
   createV2AgentRegistrationCapability,
@@ -9,8 +9,8 @@ import {
   toV2AgentModelRef,
   type V2AgentEditor,
   type V2AgentInfo,
-} from "../../src/adapters/v2";
-import { InvalidHostContextError } from "../../src/contract/errors";
+} from "../../src/adapters/v2/index.js";
+import { InvalidHostContextError } from "../../src/contract/errors.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);

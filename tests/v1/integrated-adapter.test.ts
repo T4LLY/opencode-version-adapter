@@ -1,8 +1,8 @@
 import {
   CAPABILITIES,
   type RequiredCapabilities,
-} from "../../src/contract/capabilities";
-import { createIntegratedV1ServerPlugin } from "../../src/adapters/v1";
+} from "../../src/contract/capabilities.js";
+import { createIntegratedV1ServerPlugin } from "../../src/adapters/v1/index.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);

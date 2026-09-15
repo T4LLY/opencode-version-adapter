@@ -1,4 +1,4 @@
-import type { CapabilityId } from "./capabilities";
+import type { CapabilityId } from "./capabilities.js";
 
 export const ADAPTER_ERROR_CATEGORY = {
   unsupportedCapability: "unsupported-capability",

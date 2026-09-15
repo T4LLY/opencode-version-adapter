@@ -3,8 +3,8 @@ import {
   CAPABILITIES,
   type AdapterDiagnostic,
   type DiagnosticReporter,
-} from "../../src/index";
-import { reportDiagnostic } from "../../src/contract/diagnostics";
+} from "../../src/index.js";
+import { reportDiagnostic } from "../../src/contract/diagnostics.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);

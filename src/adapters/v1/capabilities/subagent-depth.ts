@@ -1,6 +1,6 @@
-import type { SubagentDepthRequirement } from "../../../contract/subagent-depth";
-import { InvalidHostContextError } from "../../../contract/errors";
-import type { V1ConfigHandler } from "../config";
+import type { SubagentDepthRequirement } from "../../../contract/subagent-depth.js";
+import { InvalidHostContextError } from "../../../contract/errors.js";
+import type { V1ConfigHandler } from "../config.js";
 
 const OPEN_CODE_V1_DEFAULT_SUBAGENT_DEPTH = 1;
 

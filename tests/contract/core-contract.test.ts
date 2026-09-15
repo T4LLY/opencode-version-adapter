@@ -6,8 +6,8 @@ import {
   InvalidHostContextError,
   assertRequiredCapabilitiesSupported,
   type CapabilitySupportMap,
-} from "../../src/index";
-import { runCapabilityConformanceSuite } from "./capability-conformance";
+} from "../../src/index.js";
+import { runCapabilityConformanceSuite } from "./capability-conformance.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {

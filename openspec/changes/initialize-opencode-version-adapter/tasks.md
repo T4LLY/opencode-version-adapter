@@ -17,6 +17,7 @@
 - [x] 2.5 Define lifecycle ownership for setup success, partial setup rollback, and idempotent disposal; verify lifecycle tests cover all three cases before runtime integration.
 - [x] 2.6 Define stable adapter error categories for unsupported capability, initialization failure, and invalid host context; verify generation-specific failures can be retained as diagnostic causes without becoming consumer contracts.
 - [x] 2.7 Define the documented public export boundary; verify consumers and shared contract tests do not depend on `internal/` or generation implementation paths, while repository-internal `tests/v1/` and `tests/v2/` may white-box test their matching generation internals without making them public exports.
+- [x] 2.8 Promote the dual-generation server plugin factory and all generation-independent types required by its options to the package root; add npm/ESM build metadata and verify compiled output is directly importable without an `internal/` consumer import.
 
 ## 3. Establish the OpenCode v1 baseline
 

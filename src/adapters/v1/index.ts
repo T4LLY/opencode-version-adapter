@@ -5,9 +5,9 @@ export {
   type V1AdapterDefinition,
   type V1AdapterSetupInput,
   type V1CapabilityAdapter,
-} from "./adapter";
+} from "./adapter.js";
 
-export { OPEN_CODE_V1_CAPABILITY_SUPPORT } from "./support";
+export { OPEN_CODE_V1_CAPABILITY_SUPPORT } from "./support.js";
 
 export {
   createIntegratedV1ServerPlugin,
@@ -16,4 +16,4 @@ export {
   type V1IntegratedHooks,
   type V1IntegratedServerOptions,
   type V1IntegratedServerPlugin,
-} from "./integrated-adapter";
+} from "./integrated-adapter.js";

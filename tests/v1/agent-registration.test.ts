@@ -1,12 +1,12 @@
 import {
   AGENT_MODES,
   type AgentRegistrationContext,
-} from "../../src/contract/agent-registration";
-import { createV1ConfigHook } from "../../src/adapters/v1/config";
+} from "../../src/contract/agent-registration.js";
+import { createV1ConfigHook } from "../../src/adapters/v1/config.js";
 import {
   createV1AgentRegistrationHandler,
   toV1AgentConfig,
-} from "../../src/adapters/v1/capabilities/agent-registration";
+} from "../../src/adapters/v1/capabilities/agent-registration.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {

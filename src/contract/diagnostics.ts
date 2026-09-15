@@ -1,5 +1,5 @@
-import type { CapabilityId } from "./capabilities";
-import type { MaybePromise } from "./lifecycle";
+import type { CapabilityId } from "./capabilities.js";
+import type { MaybePromise } from "./lifecycle.js";
 
 export const ADAPTER_DIAGNOSTIC_SEVERITY = Object.freeze({
   warning: "warning",

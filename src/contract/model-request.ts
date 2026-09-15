@@ -1,4 +1,4 @@
-import type { MaybePromise } from "./lifecycle";
+import type { MaybePromise } from "./lifecycle.js";
 
 /**
  * Generation-independent identity available at model-request time.

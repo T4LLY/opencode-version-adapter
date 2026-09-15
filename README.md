@@ -6,7 +6,13 @@ This package is primarily maintained for personal use.
 
 It currently focuses on normalizing selected OpenCode v1 and v2 behaviors so consumers do not need to depend directly on generation-specific APIs.
 
+## Install
+
+npm install opencode-version-adapter
+
 ## Usage
+
+Import the stable contract from the package root. `createOpenCodeServerPlugin` creates one server module shape for the supported OpenCode v1/v2 loader baselines without consumer-side version branching.
 
 See [`docs/usage.md`](docs/usage.md) for integration guidelines and recommended usage patterns.
 

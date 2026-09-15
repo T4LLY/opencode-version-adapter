@@ -5,19 +5,19 @@ import {
   type CapabilityId,
   type CapabilitySupportMap,
   type RequiredCapabilities,
-} from "../../contract/capabilities";
+} from "../../contract/capabilities.js";
 import {
   ADAPTER_DIAGNOSTIC_SEVERITY,
   reportDiagnostic,
   type DiagnosticReporter,
-} from "../../contract/diagnostics";
-import { AdapterInitializationError } from "../../contract/errors";
+} from "../../contract/diagnostics.js";
+import { AdapterInitializationError } from "../../contract/errors.js";
 import {
   createAdapterHandle,
   type AdapterHandle,
   type Cleanup,
   type MaybePromise,
-} from "../../contract/lifecycle";
+} from "../../contract/lifecycle.js";
 
 export const OPEN_CODE_V1_GENERATION = "v1" as const;
 

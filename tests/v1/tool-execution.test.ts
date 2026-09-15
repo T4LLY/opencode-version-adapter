@@ -1,9 +1,9 @@
-import { createV1SuccessfulToolCompletionHook } from "../../src/adapters/v1/capabilities/successful-tool-completion";
-import { createV1ToolBeforeExecutionHook } from "../../src/adapters/v1/capabilities/tool-before-execution";
+import { createV1SuccessfulToolCompletionHook } from "../../src/adapters/v1/capabilities/successful-tool-completion.js";
+import { createV1ToolBeforeExecutionHook } from "../../src/adapters/v1/capabilities/tool-before-execution.js";
 import type {
   SuccessfulToolCompletionInput,
   ToolBeforeExecutionInput,
-} from "../../src/contract/tool-execution";
+} from "../../src/contract/tool-execution.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {

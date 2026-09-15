@@ -1,4 +1,4 @@
-import type { MaybePromise } from "./lifecycle";
+import type { MaybePromise } from "./lifecycle.js";
 
 /** Cancellation context for one host-event delivery invocation. */
 export interface HostEventDeliveryContext {

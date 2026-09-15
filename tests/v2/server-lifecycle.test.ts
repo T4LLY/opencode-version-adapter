@@ -1,11 +1,11 @@
-import { CAPABILITIES, CAPABILITY_SUPPORT, type CapabilitySupportMap } from "../../src/contract/capabilities";
-import type { DiagnosticReporter } from "../../src/contract/diagnostics";
-import { createAdapterHandle } from "../../src/contract/lifecycle";
+import { CAPABILITIES, CAPABILITY_SUPPORT, type CapabilitySupportMap } from "../../src/contract/capabilities.js";
+import type { DiagnosticReporter } from "../../src/contract/diagnostics.js";
+import { createAdapterHandle } from "../../src/contract/lifecycle.js";
 import {
   createV2Adapter,
   createV2ServerDefinition,
   createV2ServerLifecycleCapability,
-} from "../../src/adapters/v2";
+} from "../../src/adapters/v2/index.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);

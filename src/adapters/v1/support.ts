@@ -2,7 +2,7 @@ import {
   CAPABILITIES,
   CAPABILITY_SUPPORT,
   type CapabilitySupportMap,
-} from "../../contract/capabilities";
+} from "../../contract/capabilities.js";
 
 /**
  * Evidence-backed OpenCode v1.18.30 support classification for the approved

@@ -1,11 +1,11 @@
-import { CAPABILITIES } from "../../../contract/capabilities";
+import { CAPABILITIES } from "../../../contract/capabilities.js";
 import {
   ADAPTER_DIAGNOSTIC_SEVERITY,
   reportDiagnostic,
-} from "../../../contract/diagnostics";
-import { InvalidHostContextError } from "../../../contract/errors";
-import type { HostEventDelivery } from "../../../contract/host-event-delivery";
-import type { V2CapabilityAdapter } from "../adapter";
+} from "../../../contract/diagnostics.js";
+import { InvalidHostContextError } from "../../../contract/errors.js";
+import type { HostEventDelivery } from "../../../contract/host-event-delivery.js";
+import type { V2CapabilityAdapter } from "../adapter.js";
 
 /** Narrow structural subset of OpenCode v2's event subscription domain. */
 export interface V2EventDomain {

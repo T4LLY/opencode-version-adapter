@@ -1,5 +1,5 @@
-import type { ModelRequestIdentity } from "../../contract/model-request";
-import type { MaybePromise } from "../../contract/lifecycle";
+import type { ModelRequestIdentity } from "../../contract/model-request.js";
+import type { MaybePromise } from "../../contract/lifecycle.js";
 
 /**
  * Narrow structural subset of OpenCode v1.18.30's `chat.params` input used by

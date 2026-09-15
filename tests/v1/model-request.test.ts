@@ -1,7 +1,7 @@
-import { createV1ChatParamsHook } from "../../src/adapters/v1/chat-params";
-import { createV1ModelRequestGateHandler } from "../../src/adapters/v1/capabilities/model-request-gate";
-import { createV1SessionAgentModelObservationHandler } from "../../src/adapters/v1/capabilities/session-agent-model-observation";
-import type { ModelRequestIdentity } from "../../src/contract/model-request";
+import { createV1ChatParamsHook } from "../../src/adapters/v1/chat-params.js";
+import { createV1ModelRequestGateHandler } from "../../src/adapters/v1/capabilities/model-request-gate.js";
+import { createV1SessionAgentModelObservationHandler } from "../../src/adapters/v1/capabilities/session-agent-model-observation.js";
+import type { ModelRequestIdentity } from "../../src/contract/model-request.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {

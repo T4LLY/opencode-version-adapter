@@ -1,5 +1,5 @@
-import { createV1DisposeHook } from "../../src/adapters/v1/capabilities/server-lifecycle";
-import { createAdapterHandle } from "../../src/contract/lifecycle";
+import { createV1DisposeHook } from "../../src/adapters/v1/capabilities/server-lifecycle.js";
+import { createAdapterHandle } from "../../src/contract/lifecycle.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {

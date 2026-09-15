@@ -2,9 +2,9 @@ import {
   CAPABILITIES,
   CAPABILITY_SUPPORT,
   type CapabilitySupportMap,
-} from "../../src/contract/capabilities";
-import { AGENT_MODES } from "../../src/contract/agent-registration";
-import { InvalidHostContextError } from "../../src/contract/errors";
+} from "../../src/contract/capabilities.js";
+import { AGENT_MODES } from "../../src/contract/agent-registration.js";
+import { InvalidHostContextError } from "../../src/contract/errors.js";
 import {
   createV2Adapter,
   createV2AgentPermissionRulesCapability,
@@ -13,7 +13,7 @@ import {
   type V2AgentEditor,
   type V2AgentInfo,
   type V2AgentPermissionRule,
-} from "../../src/adapters/v2";
+} from "../../src/adapters/v2/index.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);

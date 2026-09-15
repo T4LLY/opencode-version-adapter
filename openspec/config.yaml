@@ -1,7 +1,7 @@
 schema: spec-driven
 
 context: |
-  Project: @xxx/opencode-version-adapter
+  Project: opencode-version-adapter
   Purpose: isolate OpenCode plugin API generation differences from consumer plugin business logic.
   Scope: OpenCode only. Do not introduce abstractions for unrelated harnesses.
   Development policy: add only capabilities required by real consumer plugins; do not mirror the complete OpenCode API speculatively.

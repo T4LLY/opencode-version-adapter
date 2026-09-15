@@ -7,7 +7,7 @@ import {
   type CapabilityId,
   type CapabilitySupportMap,
   type RequiredCapabilities,
-} from "../../src/index";
+} from "../../src/index.js";
 
 export interface CapabilityConformanceTarget {
   readonly support: CapabilitySupportMap;

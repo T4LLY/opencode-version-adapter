@@ -1,8 +1,8 @@
 import type {
   AdapterDiagnostic,
   DiagnosticReporter,
-} from "../../contract/diagnostics";
-import type { MaybePromise } from "../../contract/lifecycle";
+} from "../../contract/diagnostics.js";
+import type { MaybePromise } from "../../contract/lifecycle.js";
 
 interface V1AppLogInput {
   readonly body: {

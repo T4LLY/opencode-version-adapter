@@ -1,16 +1,16 @@
-import { CAPABILITIES } from "../../src/contract/capabilities";
-import type { AdapterDiagnostic } from "../../src/contract/diagnostics";
+import { CAPABILITIES } from "../../src/contract/capabilities.js";
+import type { AdapterDiagnostic } from "../../src/contract/diagnostics.js";
 import {
   ADAPTER_ERROR_CATEGORY,
   AdapterInitializationError,
   UnsupportedCapabilityError,
-} from "../../src/contract/errors";
+} from "../../src/contract/errors.js";
 import {
   createV2Adapter,
   OPEN_CODE_V2_CAPABILITY_SUPPORT,
   OPEN_CODE_V2_GENERATION,
   type V2CapabilityAdapter,
-} from "../../src/adapters/v2";
+} from "../../src/adapters/v2/index.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {

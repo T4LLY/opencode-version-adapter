@@ -1,69 +1,71 @@
-import type { AgentPermissionRulesProvider } from "../../contract/agent-permission";
-import type { AgentRegistration } from "../../contract/agent-registration";
+import type { AgentPermissionRulesProvider } from "../../contract/agent-permission.js";
+import type { AgentRegistration } from "../../contract/agent-registration.js";
 import {
   CAPABILITIES,
   type CapabilityId,
   type RequiredCapabilities,
-} from "../../contract/capabilities";
-import type { DiagnosticReporter } from "../../contract/diagnostics";
-import type { HostEventDelivery } from "../../contract/host-event-delivery";
+} from "../../contract/capabilities.js";
+import type { DiagnosticReporter } from "../../contract/diagnostics.js";
+import type { Cleanup } from "../../contract/lifecycle.js";
+import type { HostEventDelivery } from "../../contract/host-event-delivery.js";
 import type {
   ModelRequestGate,
   SessionAgentModelObserver,
-} from "../../contract/model-request";
-import type { SubagentDepthRequirement } from "../../contract/subagent-depth";
+} from "../../contract/model-request.js";
+import type { SubagentDepthRequirement } from "../../contract/subagent-depth.js";
 import type {
   SuccessfulToolCompletion,
   ToolBeforeExecution,
-} from "../../contract/tool-execution";
-import type { WorkspaceRegistration } from "../../contract/workspace-registration";
+} from "../../contract/tool-execution.js";
+import type { WorkspaceRegistration } from "../../contract/workspace-registration.js";
 import {
   createV1Adapter,
   type V1CapabilityAdapter,
-} from "./adapter";
-import { createV1AgentPermissionRulesHandler } from "./capabilities/agent-permission-rules";
-import { createV1AgentRegistrationHandler } from "./capabilities/agent-registration";
+} from "./adapter.js";
+import { createV1AgentPermissionRulesHandler } from "./capabilities/agent-permission-rules.js";
+import { createV1AgentRegistrationHandler } from "./capabilities/agent-registration.js";
 import {
   createV1HostEventHook,
   type V1EventHook,
-} from "./capabilities/host-event-delivery";
-import { createV1ModelRequestGateHandler } from "./capabilities/model-request-gate";
+} from "./capabilities/host-event-delivery.js";
+import { createV1ModelRequestGateHandler } from "./capabilities/model-request-gate.js";
 import {
   createV1DisposeHook,
   type V1DisposeHook,
-} from "./capabilities/server-lifecycle";
-import { createV1SessionAgentModelObservationHandler } from "./capabilities/session-agent-model-observation";
-import { createV1SubagentDepthHandler } from "./capabilities/subagent-depth";
+} from "./capabilities/server-lifecycle.js";
+import { createV1SessionAgentModelObservationHandler } from "./capabilities/session-agent-model-observation.js";
+import { createV1SubagentDepthHandler } from "./capabilities/subagent-depth.js";
 import {
   createV1SuccessfulToolCompletionHook,
   type V1ToolExecuteAfterHook,
-} from "./capabilities/successful-tool-completion";
+} from "./capabilities/successful-tool-completion.js";
 import {
   createV1ToolBeforeExecutionHook,
   type V1ToolExecuteBeforeHook,
-} from "./capabilities/tool-before-execution";
+} from "./capabilities/tool-before-execution.js";
 import {
   createV1WorkspaceRegistrationCapability,
   type V1WorkspaceRegistrationContext,
-} from "./capabilities/workspace-registration";
+} from "./capabilities/workspace-registration.js";
 import {
   createV1ChatParamsHook,
   type V1ChatParamsHandler,
   type V1ChatParamsHook,
-} from "./chat-params";
+} from "./chat-params.js";
 import {
   createV1ConfigHook,
   type V1ConfigHandler,
   type V1ConfigHook,
-} from "./config";
+} from "./config.js";
 import {
   resolveV1DiagnosticReporter,
   type V1DiagnosticContext,
-} from "./diagnostics";
-import { OPEN_CODE_V1_CAPABILITY_SUPPORT } from "./support";
+} from "./diagnostics.js";
+import { OPEN_CODE_V1_CAPABILITY_SUPPORT } from "./support.js";
 
 /** Consumer-owned semantic handlers for the approved OpenCode v1 capability set. */
 export interface V1CapabilityBindings {
+  readonly lifecycleCleanup?: Cleanup;
   readonly hostEventDelivery?: HostEventDelivery;
   readonly modelRequestGate?: ModelRequestGate;
   readonly sessionAgentModelObservation?: SessionAgentModelObserver;
@@ -110,7 +112,7 @@ export function createIntegratedV1ServerPlugin(
 ): V1IntegratedServerPlugin {
   const required = new Set<CapabilityId>(options.requiredCapabilities);
   const capabilityAdapters: V1CapabilityAdapter<V1IntegratedContext>[] = [
-    passiveCapability(CAPABILITIES.serverLifecycle),
+    lifecycleCapability(options.bindings.lifecycleCleanup),
   ];
   const hooks: {
     event?: V1EventHook;
@@ -235,6 +237,17 @@ export function createIntegratedV1ServerPlugin(
       ...hooks,
       dispose: createV1DisposeHook(handle),
     };
+  };
+}
+
+function lifecycleCapability(
+  cleanup?: Cleanup,
+): V1CapabilityAdapter<V1IntegratedContext> {
+  return {
+    capability: CAPABILITIES.serverLifecycle,
+    install() {
+      return cleanup;
+    },
   };
 }
 

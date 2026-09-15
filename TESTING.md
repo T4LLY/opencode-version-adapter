@@ -1,23 +1,38 @@
 # Testing
 
-This repository intentionally does not define package-manager metadata or a test runner. The current tests are script-style TypeScript files and must be compiled before Node executes them.
+The repository is an npm package and compiles to Node ESM in `dist/`.
 
-## Full local verification
+## Install development dependencies
 
-Run from PowerShell at the repository root:
+npm install
 
-$ts = Get-ChildItem src,tests -Recurse -Filter *.ts | Select-Object -ExpandProperty FullName; npx -y -p typescript@5.8.3 tsc --strict --target ES2022 --module commonjs --moduleResolution node --outDir .tmp-test $ts; if ($LASTEXITCODE -eq 0) { $tests = Get-ChildItem .tmp-test\tests -Recurse -Filter *.test.js | Select-Object -ExpandProperty FullName; foreach ($test in $tests) { node $test; if ($LASTEXITCODE -ne 0) { break } } }; if ($LASTEXITCODE -eq 0) { openspec validate initialize-opencode-version-adapter --type change --strict }
+## Type-check
 
-The `.tmp-test/` directory contains generated JavaScript only and may be deleted after verification.
+npm run check
+
+## Contract and adapter tests
+
+npm test
+
+The test script compiles the TypeScript sources and script-style tests to `.tmp-test/`, then executes every compiled `*.test.js` file sequentially.
+
+## Build the npm package
+
+npm run build
+
+The build emits JavaScript, declarations, declaration maps, and source maps under `dist/`.
 
 ## Real loader smoke
 
-With the pinned `opencode` v1 and `opencode2` v2 binaries available on PATH, run:
+Build first so the smoke test exercises the same compiled package entrypoint that npm consumers import. With the pinned `opencode` v1 and `opencode2` v2 binaries available on PATH, run:
 
+npm run build
 node tests/runtime/real-loader-smoke.mjs
 
-## Runner caveats
+## OpenSpec validation
 
-Do not use `bun test` as the suite command. These tests are executable scripts rather than `bun:test` registrations, so Bun's test collector does not discover them.
+openspec validate initialize-opencode-version-adapter --type change --strict
 
-Do not use `node --test` directly on the TypeScript sources. The current extensionless TypeScript imports are intended to be compiled first and are not directly resolvable by Node's test runner.
+## Runner caveat
+
+Do not use `bun test` as the suite command. These tests are executable scripts rather than `bun:test` registrations.

@@ -1,15 +1,15 @@
 import {
   AGENT_PERMISSION_ACTIONS,
   type AgentPermissionRules,
-} from "../../src/contract/agent-permission";
-import { InvalidHostContextError } from "../../src/contract/errors";
-import { AGENT_MODES } from "../../src/contract/agent-registration";
-import { createV1ConfigHook } from "../../src/adapters/v1/config";
-import { createV1AgentRegistrationHandler } from "../../src/adapters/v1/capabilities/agent-registration";
+} from "../../src/contract/agent-permission.js";
+import { InvalidHostContextError } from "../../src/contract/errors.js";
+import { AGENT_MODES } from "../../src/contract/agent-registration.js";
+import { createV1ConfigHook } from "../../src/adapters/v1/config.js";
+import { createV1AgentRegistrationHandler } from "../../src/adapters/v1/capabilities/agent-registration.js";
 import {
   createV1AgentPermissionRulesHandler,
   toV1AgentPermissionConfig,
-} from "../../src/adapters/v1/capabilities/agent-permission-rules";
+} from "../../src/adapters/v1/capabilities/agent-permission-rules.js";
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) {
