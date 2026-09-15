@@ -17,6 +17,24 @@ const diagnostic: AdapterDiagnostic = {
   capability: CAPABILITIES.serverLifecycle,
 };
 
+function assertPublicSeveritySet(): void {
+  assert(
+    ADAPTER_DIAGNOSTIC_SEVERITY.warning === "warning",
+    "warning diagnostic severity must remain stable",
+  );
+  assert(
+    ADAPTER_DIAGNOSTIC_SEVERITY.error === "error",
+    "error diagnostic severity must be publicly available",
+  );
+
+  const errorDiagnostic: AdapterDiagnostic = {
+    severity: ADAPTER_DIAGNOSTIC_SEVERITY.error,
+    code: "test-error",
+    message: "adapter subsystem stopped",
+  };
+  assert(errorDiagnostic.severity === "error", "error diagnostics must satisfy the public contract");
+}
+
 async function assertReporterReceivesStructuredDiagnostic(): Promise<void> {
   const received: AdapterDiagnostic[] = [];
   const reporter: DiagnosticReporter = (value) => {
@@ -56,6 +74,7 @@ async function assertReporterFailureIsIsolated(): Promise<void> {
 }
 
 void (async () => {
+  assertPublicSeveritySet();
   await assertReporterReceivesStructuredDiagnostic();
   await assertMissingReporterIsSilent();
   await assertReporterFailureIsIsolated();

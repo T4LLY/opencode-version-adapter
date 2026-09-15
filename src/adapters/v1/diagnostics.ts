@@ -7,7 +7,7 @@ import type { MaybePromise } from "../../contract/lifecycle";
 interface V1AppLogInput {
   readonly body: {
     readonly service: "opencode-version-adapter";
-    readonly level: "warn";
+    readonly level: "warn" | "error";
     readonly message: string;
     readonly extra: {
       readonly code: string;
@@ -38,7 +38,7 @@ export function createV1HostDiagnosticReporter(
     await app.log({
       body: {
         service: "opencode-version-adapter",
-        level: "warn",
+        level: diagnostic.severity === "error" ? "error" : "warn",
         message: diagnostic.message,
         extra: {
           code: diagnostic.code,

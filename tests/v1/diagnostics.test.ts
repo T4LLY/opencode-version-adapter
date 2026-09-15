@@ -55,6 +55,31 @@ async function assertHostReporterMapsToStructuredV1Log(): Promise<void> {
   );
 }
 
+
+async function assertErrorDiagnosticMapsToV1ErrorLog(): Promise<void> {
+  const entries: unknown[] = [];
+  const reporter = createV1HostDiagnosticReporter({
+    client: {
+      app: {
+        log(input) {
+          entries.push(input);
+        },
+      },
+    },
+  });
+
+  assert(reporter !== undefined, "v1 host logger must produce a diagnostic reporter");
+  await reportDiagnostic(reporter, {
+    severity: ADAPTER_DIAGNOSTIC_SEVERITY.error,
+    code: "test-error",
+    message: "adapter subsystem stopped",
+  });
+
+  assert(entries.length === 1, "v1 host logger must receive one error entry");
+  const entry = entries[0] as { body: { level: string } };
+  assert(entry.body.level === "error", "error diagnostics must map to v1 error level");
+}
+
 function assertExplicitReporterTakesPrecedence(): void {
   const explicit: DiagnosticReporter = () => {};
   const resolved = resolveV1DiagnosticReporter(
@@ -82,6 +107,7 @@ function assertMissingHostLoggerRemainsOptional(): void {
 
 void (async () => {
   await assertHostReporterMapsToStructuredV1Log();
+  await assertErrorDiagnosticMapsToV1ErrorLog();
   assertExplicitReporterTakesPrecedence();
   assertMissingHostLoggerRemainsOptional();
 })();

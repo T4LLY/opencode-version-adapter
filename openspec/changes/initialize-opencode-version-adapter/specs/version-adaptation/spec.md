@@ -132,25 +132,31 @@ Exact exported error class names MAY be decided during implementation, but these
 - **THEN** setup fails explicitly as an invalid host context
 - **AND** the adapter does not guess a generation and continue
 
-### Requirement: Recoverable adapter diagnostics are structured and optional
+### Requirement: Adapter diagnostics are structured and optional
 
-The adapter MUST provide a generation-independent way for consumers or integration boundaries to receive structured diagnostics for recoverable adapter conditions that do not justify failing setup. Diagnostic reporting is advisory and MUST NOT itself become a required capability.
+The adapter MUST provide a generation-independent way for consumers or integration boundaries to receive structured diagnostics for adapter operating conditions. Diagnostic reporting is advisory and MUST NOT itself become a required capability.
 
-A diagnostic emitted by the adapter MUST include a severity, a stable machine-readable code, and a human-readable message. It MAY include the related capability identifier and other generation-independent context needed to identify the condition. The initially required severity is `warning`; additional severities MUST NOT be added without a concrete consumer need.
+A diagnostic emitted by the adapter MUST include a severity, a stable machine-readable code, and a human-readable message. It MAY include the related capability identifier and other generation-independent context needed to identify the condition. The shared severity set MUST include `warning` for recoverable conditions where the specified operation continues and `error` for adapter operating failures where an owned subsystem or delivery path has stopped. Additional severities MUST NOT be added without a concrete consumer need.
 
-The diagnostic reporter MUST be optional. When no reporter is provided, the adapter MUST preserve the same functional behavior without falling back to `console` output. A reporter failure MUST NOT convert an otherwise recoverable condition into adapter setup failure.
+The diagnostic reporter MUST be optional. When no reporter is provided, the adapter MUST preserve the same functional behavior without falling back to `console` output. Reporter success or failure MUST NOT change the specified control flow of the reported condition, including whether the adapter continues, stops an owned subsystem, preserves an error for disposal, or fails setup.
 
 #### Scenario: Consumer supplies a diagnostic reporter
 
-- **WHEN** adapter setup encounters a recoverable condition for which this specification defines a diagnostic
+- **WHEN** the adapter encounters a condition for which this specification defines a diagnostic
 - **THEN** the adapter reports the structured diagnostic through the supplied generation-independent reporter
 - **AND** consumer code does not need to interpret an OpenCode-generation-specific logging type
 
 #### Scenario: No diagnostic reporter is supplied
 
-- **WHEN** the same recoverable condition occurs and no reporter is available
+- **WHEN** the same diagnosed condition occurs and no reporter is available
 - **THEN** the adapter continues with the specified functional behavior
 - **AND** it does not write directly to `console` as an implicit fallback
+
+#### Scenario: Adapter subsystem stops after an operating failure
+
+- **WHEN** an owned adapter subsystem or delivery path stops because of an operating failure and this specification defines a diagnostic
+- **THEN** the adapter reports an `error` diagnostic when a reporter is available
+- **AND** diagnostic delivery does not replace, suppress, or alter the underlying failure or lifecycle semantics
 
 #### Scenario: An integrated OpenCode generation exposes usable host logging
 
